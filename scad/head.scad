@@ -294,7 +294,7 @@ module face(R, T, shellT, botT, scY){
 
 }
 
-$fn = 130;
+$fn = 140;
 FACECOLOR = "DarkSlateGray";
 R = 75;
 T = 77;
@@ -311,8 +311,8 @@ echo(T/2 - botT);
 BEARINGT = 5;
 BEARINGR = 12/2;
 
-BOLT3TIGHT = 2.8;
-BOLT3LOOSE = 3.05;
+BOLT3TIGHT = 2.75;
+BOLT3LOOSE = 3.1;
 
 LEDR = 5/2;
 
@@ -362,7 +362,8 @@ module jetson(key){
 	}
 	// mount bars:
 	module mount(){
-		translate([0,0,-mountH])
+		//translate([0,0,-mountH])
+		mirror([0,0,1])
 		for (p=jetsonMountHoles){
 			translate(p)
 			difference(){
