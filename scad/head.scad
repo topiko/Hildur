@@ -5,12 +5,16 @@ function get_r(R, T, x, sc) = sqrt(pow(R, 2)-pow((T/2-x)/sc, 2));
 module head_shell(R, T, shellT, botT, scY, top){
 	
 	module shell_(){
-	sc = T/(2*R);
+	scZ = T/(2*R);
+	scX = 1;
+
+	scZ_in = (T-2*shellT)/(2*R);
+	scY_in = (scY*2*R - shellT*2)/(2*R);
+	scX_in = (scX*2*R - shellT*2)/(2*R);
 	translate([0,0, T/2 - botT])
-	scale([1, scY, ,sc])
 	difference(){
-		sphere(R);	
-		sphere(R-shellT);
+		scale([scX, scY, scZ]) sphere(R);	
+		scale([scX_in, scY_in, scZ_in]) sphere(R);	
 	}
 	}
 
@@ -45,14 +49,15 @@ module neck_joint(platealpha, cut){
 	R = BEARINGR + 2;
 	//plateaplha = 20;
 	H = 40;
-	W = 2*H*tan(platealpha);
+	W = 2*H*tan(platealpha) + 2*R;
 	axleR = 5/2;
 	module plate_(){
 		difference(){
 		// Base plate 
 		hull(){
 		cylinder(h=plateT, r=R, center=true);
-		translate([-W/2, -1 + H, -plateT/2]) cube([W, 1, plateT]);
+		translate([-R, -1 + H, -plateT/2]) cube([W, 1, plateT]);
+		//linear_extrude(height=plateT, center=true) polygon(points=[[-W/2, ]]);
 		}
 		// Bearing mount
 		translate([0,0,-1])cylinder(h=BEARINGT+1, r=BEARINGR+RSPACING, center=true);
@@ -61,7 +66,7 @@ module neck_joint(platealpha, cut){
 		}
 	}
 	
-	platesDist = 25;
+	platesDist = 20;
 	//rotate([0,0, rotalpha])
 	if (cut){
 		rotate([90,0,0]) cylinder(h=2*H, r=platesDist/2, center=true);	
@@ -74,30 +79,6 @@ module neck_joint(platealpha, cut){
 
 }
 
-
-/*
-module jetson_camera_mount(cut){
-	
-	rbar = 6/2;
-	hmount = 20;
-	corners = [for (i=[-1,1]) for (j=[-1,1]) [i*WCAMERA/2, j*WCAMERA/2,0]];
-	module mount_(){
-		for (p=corners){
-			translate(p) cylinder(h=hmount, r=rbar);
-		}
-	}
-	
-	module camandbolts_(){
-		cylinder(h=HCAMERA, r=RCAMERA);
-		for (p=corners){
-			translate(p) bolt(7, BOLT3TIGHT, -BOLT3TIGHT/2);
-		}
-	}
-	
-	if (cut){ camandbolts_();}
-	else {mount_();}
-}
-*/
 
 module camera(cut){
 	holeD = 30;
@@ -158,46 +139,47 @@ module backhead(R, T, shellT, botT, scY){
 		translate([0,0,-rimT])
 		difference(){
 		cylinder(h=rimT, r=5*rimR);
-		translate([0,0,-1]) cylinder(h=2*rimT+1, r=rimR-boltrimW);
+		translate([0,0,-1]) cylinder(h=2*rimT+1, r=rimR-boltrimW-BOLT3LOOSE);
 		}	
 		head_shell(R, T, R, botT, scY, false);
 		}
 	}
-	
+	module shifted_neck(){
+		cutR = get_r(R, T, botT, T/(2*R)) - BEARINGR - 2;
+		translate([0,-cutR, -BEARINGR-10]) 
+
+		rotate([90, 0, 0]) 
+		rotate([0, 90, 0]) 
+		neck_joint(3, false);
+	}
+
+	module neck(){
+		difference(){	
+		shifted_neck();
+		head_shell(R, T, R, botT, scY, true);
+		head_shell(R, T, R, botT, scY, false);
+		}
+	}
 	module backheadwadds(){	
 		head_shell(R, T, shellT, botT, scY, false);
 		boltrim();
+		neck();
 	}
-
+	
 	module backheadwcuts(){
 		difference(){
 		backheadwadds();
-		translate([0,0,-1]) head_close_bolts(R, T, botT, scY, boltrimW/2, BOLT3LOOSE);
+		translate([0,0,-1]) head_close_bolts(R, T, botT, scY, boltrimW - BOLT3LOOSE, BOLT3LOOSE);
 		}
 	}
+	color(FACECOLOR)
 	backheadwcuts();
 
 }
 
 module face(R, T, shellT, botT, scY){
 	
-	module shifted_neck(){
-		translate([0,(-R-BEARINGR)*scY, BEARINGR+2]) 
-		rotate([0, -90, 0]) 
-		rotate([0,0, -10]) neck_joint(20, false);
-	}
-
-	module neck(){
-		intersection(){
-		difference(){
-		cube(10000, center=true);
-		head_shell(R, T, R, botT, scY, true);
-		}
-		shifted_neck();
-		}
-	}
 	
-
 	module jetsonattach(){
 
 		intersection(){
@@ -214,11 +196,12 @@ module face(R, T, shellT, botT, scY){
 		rimT = 3;
 		sc = T/(2*R);
 		rimR = get_r(R, T, botT, sc);
+		scY_in = (scY*rimR - boltrimW)/rimR;
+		scX_in = (rimR - boltrimW)/rimR;
 		intersection(){
-		scale([1,scY, 1])
 		difference(){
-		cylinder(h=rimT, r=5*rimR);
-		translate([0,0,-1]) cylinder(h=2*rimT+1, r=rimR-boltrimW);
+		scale([1,scY, 1]) cylinder(h=rimT, r=5*rimR);
+		translate([0,0,-1]) scale([scX_in, scY_in, 1]) cylinder(h=2*rimT+1, r=rimR);
 		}	
 		head_shell(R, T, R, botT, scY, true);
 		}
@@ -248,7 +231,7 @@ module face(R, T, shellT, botT, scY){
 	
 	module ledmouth(){
 		dx = 9;
-		mouthrot = -5;
+		mouthrot = -12;
 		row1 = [-2*dx, -dx, 0, dx, 2*dx];
 		row2 = [-dx, 0, dx];
 		LEDR = (3 + .05)/2;	
@@ -267,14 +250,14 @@ module face(R, T, shellT, botT, scY){
 		head_shell(R, T, shellT, botT, scY, true);
 		cameraeye(false);
 		boltrim();
-		neck();
+		//neck();
 		jetsonattach();
 	}
 	centerH = T/2 - botT;
 	cameraJetsonD=7;
-	mouthfracpos = [.45, .25, 0];	
-	jetsonPos = [0, 12, centerH+2];
-	eyefracpos = [.28, .60, jetsonPos[2]+cameraJetsonD];	
+	mouthfracpos = [.46, .22, 0];	
+	jetsonPos = [0, 14, centerH+3];
+	eyefracpos = [.28, .63, jetsonPos[2]+cameraJetsonD];	
 	
 	echo("Jetson eye poses Z:");
 	echo(jetsonPos[2], eyefracpos[2]);
@@ -285,22 +268,23 @@ module face(R, T, shellT, botT, scY){
 		cameraeye(true);
 		ledeye();
 		ledmouth();
-		head_close_bolts(R, T, botT, scY, boltrimW/2, BOLT3TIGHT);
+		head_close_bolts(R, T, botT, scY, boltrimW - BOLT3LOOSE, BOLT3TIGHT);
 		}
 	}
 	
 	color(FACECOLOR) facewcuts();
 	//jetsonmock();
+	//jetsonattach();
 
 }
 
-$fn = 140;
+$fn = 80;
 FACECOLOR = "DarkSlateGray";
 R = 75;
 T = 77;
-shellT = 2;
+shellT = 1.2;
 botT = 25;
-scY = 1.05;
+scY = 1.1;
 HCAMERA = 30;
 RCAMERA = 10;
 WCAMERA = 35;
@@ -317,6 +301,7 @@ BOLT3LOOSE = 3.1;
 LEDR = 5/2;
 
 boltrimW = 8;
+
 
 
 face(R, T, shellT, botT, scY); 
@@ -350,36 +335,46 @@ module jetson(key){
 	jetsonConnectorsCorners = [[15, -1], [86, -1], [86, 22], [15, 22]];
 
 	mountH = 40;
-	mountD = 6;
-	
+	mountD = 9;
+	breadboardT = 2;
 	
 	module jetson_(){
-		translate([0,0,-1]){
-		linear_extrude(height=2) polygon(points=jetsonCorners);	
+		translate([0,0,-breadboardT/2]){
+		linear_extrude(height=breadboardT) polygon(points=jetsonCorners);	
 		linear_extrude(height=30) polygon(points=jetsonHeatSinkCorners);
 		linear_extrude(height=20) polygon(points=jetsonConnectorsCorners);
 		}
 	}
+	module pole(){
+		attachD = 5;
+		transitionH = mountD - attachD;
+		translate([0,0, breadboardT/2])
+		difference(){
+		union(){
+		translate([0,0,transitionH])cylinder(h=mountH-transitionH, r=mountD/2);
+		cylinder(h=transitionH, r1=attachD/2, r2=mountD/2);
+		}
+		bolt(6, BOLT3TIGHT, -BOLT3TIGHT/2);
+		}
+
+	}
 	// mount bars:
 	module mount(){
-		//translate([0,0,-mountH])
 		mirror([0,0,1])
 		for (p=jetsonMountHoles){
-			translate(p)
-			difference(){
-			cylinder(h=mountH, r=mountD/2);
-			bolt(6, BOLT3TIGHT, -BOLT3TIGHT/2);
-			}
-			
+			translate(p) pole();	
 	}
 	}
 	
-	rotate([0,0,0])
-	mirror([0,0,1])
+		
+	rotate([0,180,0])
+	
+	//mirror([0,0,1])
 	translate([-jetsonCorners[1][0]/2, -jetsonCorners[2][1]/2, 0])
 	if (key=="jetson"){jetson_();}
 	else if (key=="mount"){mount();}
 	else {jetson_(); mount();};
 	
 }
-//jetson();
+//jetson("mount");
+//jetson("jetson");
