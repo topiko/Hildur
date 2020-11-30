@@ -62,16 +62,17 @@ a = angle(r_0, r_f)
 # small rotation, and collect the vectors in the matrix X. Finally we plot the points,
 # which represent the exact geodesic from r_0 to r_f.
 
-N = 100
+N = 50
 da = a/N
 R = rot(da, n)
 
 X = np.zeros((N+1, 3))
 r = r_0
+X[0] = r_0
 
-for i in range(N+1):
+for i in range(N):
     r = R @ r
-    X[i] = r
+    X[i+1] = r
     x, y, z = r
     ax.scatter([x], [y], [z], color = 'r', s = 3)
 
@@ -99,6 +100,7 @@ def R2(a, b):
 
 Y = np.zeros((N+1, 3))
 r = r_0
+Y[0] = r_0
 
 for i in range(N):
     r_1 = X[i]
@@ -109,13 +111,13 @@ for i in range(N):
     da = a_2 - a_1
     R = R2(a_1, db) @ Rz(da)
     r = R @ r
-    Y[i] = r
+    Y[i+1] = r
 
 # FuncAnimation is mysterious 
 
-data = [np.zeros((3, N))]
+data = [np.zeros((3, N+1))]
 
-for i in range(N):
+for i in range(N+1):
     data[0][:, i] = Y[i]
 
 def update(n, data, draw):
@@ -124,9 +126,9 @@ def update(n, data, draw):
         draw.set_3d_properties(data[2, :n])
     return draw
 
-draw = [ax.plot(data[0][0, 0:1], data[0][1, 0:1], data[0][2, 0:1], linewidth = 5)[0]]
+draw = [ax.plot(data[0][0, 0:0], data[0][1, 0:0], data[0][2, 0:0], linewidth = 5)[0]]
 
-ani = FuncAnimation(fig, update, N, fargs = (data, draw), interval = 33.33, repeat_delay = 1000) 
+ani = FuncAnimation(fig, update, N+1, fargs = (data, draw), interval = 33.33, repeat_delay = 1000) 
 
 # ani.save('anim.mp4')
 
