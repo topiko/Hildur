@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from matplotlib.animation import FuncAnimation
 
-fig = plt.figure(figsize = (7.2, 7.2))
+fig = plt.figure(figsize = (10.8, 10.8))
 ax = fig.add_subplot(111, projection='3d')
 
 ax.xaxis.set_major_formatter(plt.NullFormatter()) 
@@ -62,7 +62,7 @@ a = angle(r_0, r_f)
 # small rotation, and collect the vectors in the matrix X. Finally we plot the points,
 # which represent the exact geodesic from r_0 to r_f.
 
-N = 50
+N = 1000
 da = a/N
 R = rot(da, n)
 
@@ -74,13 +74,17 @@ for i in range(N):
     r = R @ r
     X[i+1] = r
     x, y, z = r
-    ax.scatter([x], [y], [z], color = 'r', s = 3)
+    if np.mod(i, 10) == 0:
+        ax.scatter([x], [y], [z], color = 'r', s = 5)
 
 # This extracts the spehrical angles of the vector r
 def find_angles(r):
     x, y, z = r
     theta = np.arccos(z/np.linalg.norm(r))
     phi = np.arctan2(y, x)
+    if phi < 0:
+        phi = phi + 2*np.pi
+
     return theta, phi
 
 # Rotation matrix around the z-axis
@@ -91,6 +95,9 @@ def Rz(a):
 def R2(a, b):
     R = np.array([[np.cos(b), 0, np.sin(b)], [0, 1, 0], [-np.sin(b), 0, np.cos(b)]])
     return Rz(a) @ R @ Rz(-a)
+
+'''
+Here is the previous calculation, which now is not used.
 
 # We again start with the vector r_0, but at each step we now apply a sequence of two small
 # rotations around the axes that the robot's arm can rotate around. The rotation is given by
@@ -113,12 +120,105 @@ for i in range(N):
     r = R @ r
     Y[i+1] = r
 
+'''
+
+''' 
+In the above calculation the angle of rotation could have any value, while in reality the
+robot can perform rotations only in multiples of some fixed step size delta.
+
+To come up with a sequence of rotations which each have the rotation angle delta, and which
+approximate the geodesic from r_0 to r_f in a half-reasonable way, we do the following:
+
+1. Start with the initial point r_0 and the known exact geodesic from r_0 to r_f.
+
+2. Find the four possible points that can be obtained from r_0 by applying a single
+'elementary' rotation (i.e. by delta or -delta around the two available axes of rotation).
+
+3. Calculate which of the four points is closest to the geodesic, and find the point on the
+geodesic that corresponds to this minimum distance -- call this point p_min.
+
+4. Take the best of the four points as the new position vector, and update the geodesic by
+erasing the part from r_0 to p_min. (This is to ensure that we keep moving towards r_f and
+cannot start going back towards r_0.)
+
+5. Repeat until the whole geodesic has been erased.
+
+'''
+
+delta = 360/64*np.pi/180    # Step size of rotations
+
+# Distance between the point p and the curve described by the points in the matrix C
+def dist(p, C):
+    d = 100
+    i = -1
+    for q in C:
+        i = i+1
+        d_q = np.linalg.norm(p - q)
+        if d_q < d:
+            d = d_q
+            i_min = i
+    
+    # Return the distance and the index of the nearest point as an element of C
+    return d, i_min
+
+r = r_0
+C = X                   # The exact geodesic from r_0 to r_f
+Z = np.zeros((1000, 3)) # Matrix in which the points of the arm's path are stored
+Z[0] = r_0
+
+k = 0
+
+while len(C) > 0:   
+
+    # Angles of the current position
+    b, a = find_angles(r)
+
+    r_p = np.zeros((4, 3))
+
+    # The four possible positions that can be reached by a single rotation from r
+    r_p[0] = Rz(delta) @ r
+    r_p[1] = Rz(-delta) @ r
+    r_p[2] = R2(a, delta) @ r
+    r_p[3] = R2(a, -delta) @ r
+
+    # Now calculate which r_p is closest to the curve C
+    d = np.zeros(4)
+    ind = np.zeros(4)
+    
+    for i in range(4):
+        d[i], ind[i] = dist(r_p[i], C)
+
+    i = int(np.argmin(d))
+    i_min = int(ind[i])     # Index of the point in C that is closest to the best r_p 
+    
+    # Cut off the points in C until the point of minimum distance, and one more.
+    # (One more so that at least one point is cut off in any case, and progress eventually happens.)
+    C = C[i_min+1:, :]
+
+    # Update the position vector to the one closest to C, and store it in the matrix Z.
+    r = r_p[i]
+    
+    k = k+1
+    Z[k] = r
+
+    # ax.scatter([r[0]], [r[1]], [r[2]], color = 'b', s = 10)
+
+Z = Z[:k, :]    # Remove the remaining zero rows from Z
+
 # FuncAnimation is mysterious 
 
-data = [np.zeros((3, N+1))]
+n_Z = len(Z)
+data = [np.zeros((3, n_Z))]
 
-for i in range(N+1):
-    data[0][:, i] = Y[i]
+for i in range(n_Z):
+    data[0][:, i] = Z[i]
+
+''' Data for the old calculation
+# data = [np.zeros((3, N+1))]
+
+# for i in range(N+1):
+#     data[0][:, i] = Y[i]
+'''
 
 def update(n, data, draw):
     for draw, data in zip(draw, data):
@@ -128,8 +228,8 @@ def update(n, data, draw):
 
 draw = [ax.plot(data[0][0, 0:0], data[0][1, 0:0], data[0][2, 0:0], linewidth = 5)[0]]
 
-ani = FuncAnimation(fig, update, N+1, fargs = (data, draw), interval = 33.33, repeat_delay = 1000) 
+ani = FuncAnimation(fig, update, n_Z, fargs = (data, draw), interval = 66.66, repeat_delay = 1000) 
 
-# ani.save('anim.mp4')
+# ani.save('anim.mp4', fps = 10)
 
 plt.show()
