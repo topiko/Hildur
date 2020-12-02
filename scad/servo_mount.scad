@@ -1,28 +1,24 @@
 use <gears/gears.scad>;
 use <servos.scad>;
 use <utils.scad>;
+include <standards.scad>;
 
-$fn = 140;
+$fn = 100;
 $fa = 100;
 $fs = .10;
 
-modul = 1;
-tooth_number = 13;
-gearT = 6;
-bore = 5;
-
-D = modul*tooth_number;
-echo(D);
-length = 1;
-helix_angle=45;
+//GEARMODUL = 1;
+//tooth_number = 13;
+//GEART = 6;
+//bore = 5;
+//D = GEARMODUL*tooth_number;
+//length = 1;
 
 
 
-BEARINGD = 12;
-BEARINGT = 5;
 
 
-module axle_w_gear(modul, ntooth, cut=false){
+module axle_w_gear(GEARMODUL, ntooth, cut=false){
 	L = 25;
 	D = 12;
 	
@@ -32,23 +28,43 @@ module axle_w_gear(modul, ntooth, cut=false){
 		for (j=[0,1]) translate([0,0,j*L]) cylinder(h=20, r=BOLT3TIGHT/2, center=true);
 		}
 	}
+	
+	module bearing_axles(){
+		addH = 3;
+		sp_bearing = .05;
+		bearingAxleL = 2*sp + BEARINGT + 3;
+		module axle(){
+		difference(){
+		union(){
+		cylinder(h=bearingAxleL, r=BEARINGAXLED/2-sp_bearing);
+		cylinder(h=addH-.2, r=BOLT3LOOSE+.5);
+		cylinder(h=addH, r=BEARINGAXLED/2+.5);
+		}
+		bolt(2*bearingAxleL, BOLT3LOOSE, 0);
+		}
+		}
+		shift = -2*sp - BEARINGT - addH	;
+		translate([0,0,shift]) axle();
+		translate([0,0,L-shift]) mirror([0,0,1]) axle();
+	}
+
 	module gear(){
 	rotate([0,0,-45])
 	intersection(){
 		hull(){
-		cube([100, 100, gearT]);
-		cylinder(h=gearT, r=D/2);
+		cube([100, 100, GEART]);
+		cylinder(h=GEART, r=D/2);
 		}
-		herringbone_gear(modul, ntooth, gearT, 
+		herringbone_gear(GEARMODUL, ntooth, GEART, 
 			 D/2, 
 			 pressure_angle=20, 
-			 helix_angle=helix_angle, 
+			 helix_angle=HELIXANGLE, 
 			 optimized=false);
 	}
 	}
 	
 
-	sp = .5;
+	sp = 1.;
 	module bearings(sp1=0){
 		BEARINGT = BEARINGT + sp1;
 		BEARINGD = BEARINGD + sp1;	
@@ -59,8 +75,8 @@ module axle_w_gear(modul, ntooth, cut=false){
 	module gear_cutter(){	
 		translate([0,0,-sp]){ 
 		intersection(){
-		translate([-D/2, -50, 0]) cube([100, 100, gearT+2*sp]);
-		cylinder(h=gearT+sp*2, r=(ntooth*modul)/2 + modul*2);
+		translate([-D/2, -50, 0]) cube([100, 100, GEART+2*sp]);
+		cylinder(h=GEART+sp*2, r=(ntooth*GEARMODUL)/2 + GEARMODUL*2);
 		}
 		}	
 	}
@@ -80,7 +96,7 @@ module axle_w_gear(modul, ntooth, cut=false){
 	}
 	
 	module bearing_cutter(){
-		bearings(sp1=.1);
+		bearings(sp1=.05);
 		translate([0,0,-BEARINGT - sp]) 
 		translate([0,0,-L]) cylinder(h=3*L, r=BEARINGD/2 - sp);
 	}
@@ -95,53 +111,53 @@ module axle_w_gear(modul, ntooth, cut=false){
 		axle();
 		//bearings();
 		gear();
+		bearing_axles();
 	}
 	else{cutters();}
 }
 
-module servo_mount_w_axle(top, bolts=false){
+module servo_mount_w_axle(top, bolts=false, boltsD=BOLT3LOOSE){
 	ntooth2 = 26;
 	ntooth1 = 14;
-	pitchD1 = ntooth1*modul;
-	pitchD2 = ntooth2*modul;
+	pitchD1 = ntooth1*GEARMODUL;
+	pitchD2 = ntooth2*GEARMODUL;
 	gearsp = .3;
 
 	module servo(cut){
-		sp = .5;
-		translate([(pitchD1+pitchD2)/2+gearsp, 0, gearT + sp])
-		rotate([0,180,180]) 
-		kst_servo(cut=cut, hornR=pitchD1/2 + modul + 2*gearsp, hornT=gearT + sp*2);
-		if (cut){ }
-
+		sp = 1.;
+		translate([(pitchD1+pitchD2)/2+gearsp, 0, GEART + sp])
+		rotate([0,180,180]){ 
+		if (!cut){kst_servo(cut=cut, hornR=pitchD1/2 + GEARMODUL, hornT=GEART);}
+		if (cut){kst_servo(cut=cut, hornR=pitchD1/2 + GEARMODUL + 2*gearsp, hornT=GEART + sp*2);}
+		}
 	}	
 
 	
 
 	wallT = 1;
-	baseW = 57;
-	baseH = 39;
+	baseW = 57.5;
+	baseH = 40;
 	baseT = BEARINGD/2 + wallT;
+	Z = BEARINGT + 3;
 
 	module base(){
-		Z = BEARINGT + 2;
-		X = BEARINGD/2 + wallT + 7;	
+		X = BEARINGD/2 + wallT + 6.5;	
 		k = top ? 1 : -1;
-
 		difference(){
 			translate([baseW/2-X, k*baseT/2, (baseH/2-Z)]) cube([baseW, baseT, baseH], center=true);
-			axle_w_gear(modul, ntooth2, cut=true);
+			axle_w_gear(GEARMODUL, ntooth2, cut=true);
 			servo(cut=true);
 			bolts();
 		}
 	}
 	
 
-	module bolts(boltD=BOLT3TIGHT){
+	module bolts(boltD=boltsD){
 		sink = .5;
 		boltL = baseT*3;
 		points = [[-9, 0, -4], [-9, 0, 29],
 			  [9, 0, 29], [9, 0, -4],
-			  [40, 0, 29], [32, 0, 2]];
+			  [41, 0, 29], [32, 0, 2]];
 		
 		for (p=points){
 			translate(p) rotate([-90,0,0]) translate([0,0,-baseT]) bolt(boltL, boltD, sink);
@@ -149,17 +165,20 @@ module servo_mount_w_axle(top, bolts=false){
 	}
 	
 	// Return:	
+	
+	translate([0,0,Z-baseH/2]) 
 	if (!bolts){base();}
 	else if (bolts) {bolts();}
-
+	
+	//axle_w_gear(modul, 26);
+	//servo();
 }
 
-BOLT3TIGHT=2.8;
-BEARINGAXLED= 5;
 
 
-servo_gear(modul, 14, gearT);
+servo_gear(GEARMODUL, 14, GEART);
 //servo_mount_w_axle(false);
+//servo_mount_w_axle(true, true);
 //axle_w_gear(modul, 26);
-//kst_servo(cut=true, hornR=2);
+//kst_servo(cut=true, hornR=8, hornT=8);
 
