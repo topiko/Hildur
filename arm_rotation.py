@@ -17,16 +17,16 @@ z = np.cos(v)
 ax.plot_surface(x, y, z, color = 'r', alpha = 0.33)
 
 # Starting point (defined by random spherical angles)
-th_0 = 0.136168 # np.pi*np.random.rand()
-ph_0 = 1.134330 # 2*np.pi*np.random.rand()
+th_0 = np.pi*np.random.rand()
+ph_0 = 2*np.pi*np.random.rand()
 
 x_0 = np.sin(th_0)*np.cos(ph_0)
 y_0 = np.sin(th_0)*np.sin(ph_0)
 z_0 = np.cos(th_0)
 
 # Finishing point
-th_f = 1.024921 # np.pi*np.random.rand()
-ph_f = 1.781721 # 2*np.pi*np.random.rand()
+th_f = np.pi*np.random.rand()
+ph_f = 2*np.pi*np.random.rand()
 
 x_f = np.sin(th_f)*np.cos(ph_f)
 y_f = np.sin(th_f)*np.sin(ph_f)
@@ -151,7 +151,8 @@ point p_min.
 geodesic by erasing the part from r_0 to p_min. (This is to ensure that we keep
 moving towards r_f and cannot start going back towards r_0.)
 
-5. Repeat until the whole geodesic has been erased. At step 2 exclude the
+5. Repeat until the whole geodesic has been erased, or if every rotation moves
+the position vector farther away from the target point. At step 2 exclude the
 rotation that would go back to the previous position.
 
 6. Finally check if there are still rotations that take the position vector
@@ -164,7 +165,7 @@ delta = 360/64*np.pi/180    # Step size of rotations
 
 # Distance between the point p and the curve described by the points in C
 def dist(p, C):
-    d = 100
+    d = np.inf
     i = -1
     for q in C:
         i = i+1
@@ -188,11 +189,12 @@ def exclude(i):
         return 2
 
 r = r_0
-C = X                   # The exact geodesic from r_0 to r_f
-Z = np.zeros((1000, 3)) # Matrix to store the points of the arm's path
+C = X                    # The exact geodesic from r_0 to r_f
+Z = np.zeros((1000, 3))  # Matrix to store the points of the arm's path
 Z[0] = r_0
 
 k = 0
+i_best = 0  # Apparently this must have an initial value even if it isn't used
 
 while len(C) > 0:
 
@@ -210,8 +212,8 @@ while len(C) > 0:
     # Exclude the rotation that would go back to the previous position
     # (Would be better if the excluded position vector is not even calculated.)
     if k > 0:
-        i_excl = exclude(i)
-        r_p[i_excl] = np.array([0, 0, 0])
+        i_excl = exclude(i_best)
+        r_p[i_excl] = np.array([1000, 0, 0])
 
     # Now calculate which r_p is closest to the curve C
     d = np.zeros(4)
@@ -220,20 +222,32 @@ while len(C) > 0:
     for i in range(4):
         d[i], ind[i] = dist(r_p[i], C)
 
-    # Find the index of the point in C that is closest to the best r_p 
-    i = int(np.argmin(d))
-    i_min = int(ind[i])
+    # Index of the best r_p
+    i_best = int(np.argmin(d))
+
+    # Distance from the old position to the target point
+    d_old = np.linalg.norm(r - r_f)
+
+    # Distance from the new position to the target point
+    d_new = np.linalg.norm(r_p[i_best] - r_f)
+
+    # Update the position vector and store it in the matrix Z, unless the new
+    # position is worse than the old position, in which case stop.
+    if d_new > d_old:
+        break
+
+    r = r_p[i_best]
+
+    k = k+1
+    Z[k] = r
+
+    # Index of the point in C that is closest to the best r_p
+    i_min = int(ind[i_best])
 
     # Cut off the points in C until the point of minimum distance, and one
     # more point. (One more so that at least one point is cut off in any case,
     # and progress eventually happens.)
     C = C[i_min+1:, :]
-
-    # Update the position vector to the one closest to C, and store it in Z.
-    r = r_p[i]
-
-    k = k+1
-    Z[k] = r
 
 # Now check if some rotations still take the position vector closer to the
 # target point
