@@ -253,8 +253,6 @@ while len(C) > 0:
 # target point
 while True:
 
-    k = k+1
-
     b, a = find_angles(r)               # Angles of the current position
     dist_0 = np.linalg.norm(r - r_f)    # Distance to target point
 
@@ -275,19 +273,13 @@ while True:
     # best r_p and store it in Z
     if dist < dist_0:
         r = r_p[i_min]
+        k = k+1
         Z[k] = r
 
     else:
         break
 
-Z = Z[:k, :]    # Remove the remaining zero rows from Z
-
-# Check if the final point was reached already in an earlier step.
-# If it was, remove the unnecessary points from Z. 
-for i in range(len(Z) - 1):
-    if np.linalg.norm(Z[i] - Z[len(Z)-1]) < 1e-6:
-        Z = Z[:i+1, :]
-        break
+Z = Z[:k+1, :]  # Remove the remaining zero rows from Z
 
 ax.scatter([Z[:, 0]], [Z[:, 1]], [Z[:, 2]], color = 'b', s = 20)
 
