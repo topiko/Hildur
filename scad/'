@@ -1,0 +1,68 @@
+use <servo_mount.scad>;
+use <utils.scad>;
+use <camera.scad>;
+include <standards.scad>;
+
+
+//camera(true);
+//servo_mount_w_axle(false, servoNTooth=18, axleNTooth=18, turnAngleMiddle=90, turnArmW=9, roundtip=true, key="bottom");
+//servo_mount_w_axle(false, servoNTooth=20, axleNTooth=20, turnAngleMiddle=120, turnArmW=8,  key="cut");
+//axle_w_gear(GEARMODUL, 20, 180, key="buildall");
+
+//servo_mount_w_axle(false, servoNTooth=18, axleNTooth=18, turnAngleMiddle=90, turnArmW=9, roundtip=true, Xs = 13, key="cutmild");
+
+module dual_joint_arm(L, W, T=0){
+	
+	// The Radius of tip circle
+	Xs = T/2;
+	module servo(key){
+		servo_mount_w_axle(false, servoNTooth=18, axleNTooth=18, 
+				   turnAngleMiddle=90, turnArmW=9, 
+				   roundtip=true, Xs=Xs, key="cutmild");
+	}
+	
+
+	module arm(wallT=0, key="bulk"){
+		L = L - 2*wallT;
+		W = W - 2*wallT;
+		T = T - 2*wallT;
+		Xs = Xs - wallT;
+			
+		X = Xs - cornerR;
+		module unit2d(){
+			intersection() {
+			offset(cornerR) square([2*X, W-2*cornerR], center=true);
+			translate([0, -500, 0]) square(10000);
+			}
+		}
+
+		module ring(){
+			rotate_extrude(angle=360) translate([0, 0, -W/2]) unit2d();
+		}
+		
+		module bulk(){
+			module oneside(){rotate([0,90,0]) rotate([0,0,90]) linear_extrude(height=L-2*Xs, center=true) unit2d();}
+			
+			oneside();
+			mirror([0,1,0]) oneside();
+		}
+		
+		module bulkfull(){
+			for (i=[-1,1]){
+				translate([i*(L/2-Xs),0, 0]) ring();
+			}
+			bulk();	
+		}
+		
+		bulkfull();
+		
+	}
+	
+	// Thickness of arm
+	T = T==0 ? 2*Xs : T;
+
+	cornerR = 3;
+	arm(wallT=5);
+	}
+
+dual_joint_arm(150, 45, 25);

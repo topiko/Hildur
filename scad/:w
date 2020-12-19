@@ -6,10 +6,9 @@ include <standards.scad>;
 
 
 module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, key="buildall"){
-	L = 27;
+	L = 25;
 	D = 12;
 	
-
 	module axle(){
 	difference(){
 		cylinder(h=L, r=D/2);
@@ -51,13 +50,14 @@ module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, 
 
 	// Due to the fact hta the axle has diameter:
 	addAngle = asin(D/(2*L));
+	//turnAngle=0;
+	echo(addAngle, D/2, L);
 	translate([0,0,-shift])
 	rotate([0,0,-turnAngle/2])
 	intersection(){
 		hull(){
 			echo(addAngle);
-			rotate([0,0,-addAngle]) 
-			rotate_extrude(angle=turnAngle + 2*addAngle) square([R, L]);
+			rotate([0,0,addAngle]) rotate_extrude(angle=turnAngle + 2*addAngle) square([R, L]);
 			cylinder(h=T, r=D/2);
 		}
 		if (key=="gear"){
@@ -71,11 +71,10 @@ module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, 
 			cylinder(h=T, r=R);
 		}
 	}
-
 	}
 	
 
-	sp = 0.66;
+	sp = 1.;
 	module bearings(sp1=0){
 		BEARINGT = BEARINGT + sp1;
 		BEARINGD = BEARINGD + sp1;	
@@ -93,16 +92,13 @@ module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, 
 	}*/
 
 	module axle_cutter(){
-		// Due to the fact hta the axle has diameter:
-		addAngle = asin(D/(2*50));
-
 		turnArmW = turnArmW + 2*sp;
 		module wedge(){	
 			L = L + 2*sp;
 			rotate([0,0,turnAngleMiddle])
 			hull(){
-			cylinder(h=turnArmW, r=turnArmW/2);
-			rotate([0,0, -addAngle]) rotate_extrude(angle=turnAngle + 2*addAngle) square([50, turnArmW]);
+			cylinder(h=turnArmW, r=D/2);
+			rotate_extrude(angle=turnAngle) square([50, turnArmW]);
 			}
 		}
 		
@@ -142,9 +138,9 @@ module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, 
 	}
 }
 
-module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0, turnArmW=7, key="bottom", roundtip=false, topServoBearing=true, Xs=0, boltsD=BOLT3LOOSE, turnOverride=0, baseH=0){
+module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0, turnArmW=7, key="bottom", roundtip=false, topServoBearing=true, Xs=0, boltsD=BOLT3LOOSE){
 
-	turnAngle = turnOverride == 0 ? servoNTooth/axleNTooth*180 : turnOverride;
+	turnAngle = servoNTooth/axleNTooth*180;
 	pitchD1 = servoNTooth*GEARMODUL;
 	pitchD2 = axleNTooth*GEARMODUL;
 	gearsp = .2;
@@ -161,12 +157,12 @@ module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0,
 	
 
 	wallT = 1;
-	baseH = baseH == 0 ? 41 : baseH;
-	baseT = Xs == 0 ? 6 + wallT: Xs;
-	Z = BEARINGT + 3.;
+	baseW = 57.5;
+	baseH = 42;
+	baseT = BEARINGD/2 + wallT + 3;
+	Z = BEARINGT + 4.5;
 	X = Xs == 0 ? BEARINGD/2 + wallT + 6.5 : Xs;
 
-	baseW = X + pitchD1 + pitchD2/2 + 15;
 	module base(){
 		k = (key=="top") ? 1 : -1;
 		difference(){
@@ -186,25 +182,15 @@ module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0,
 	
 
 	module bolts(boltD=boltsD){
-		boltD = (key=="bolts") ? BOLT3TIGHT : key=="top" ? BOLT3TIGHT : boltD;
+		boltD = (key=="bolts") ? BOLT3TIGHT : boltD;
 		sink = .5;
 		boltL = baseT*3;
-		s2 =.2;
-		s1 = roundtip ? 9 : s2;
-		boltshift = roundtip ? -.5 : 0; 
-		toprow = -3.9;
-		botrow = 31;
-		xservoend = baseW - X - BOLT3LOOSE;
-		points = [[-9, 0, toprow+boltshift, s1], [-9, 0, botrow, s1],
-			  [9, 0, botrow, s2], [9, 0, toprow, s2],
-			  [xservoend, 0, botrow, s2], [xservoend, 0, toprow, s2],
-			  [xservoend-10, 0, toprow, s2]];
+		points = [[-9, 0, -4], [-9, 0, 29],
+			  [9, 0, 29], [9, 0, -4],
+			  [41, 0, 29], [32, 0, 2]];
 		echo(boltD);	
 		for (p=points){
-			s  =p[3];
-			p = [p[0], p[1], p[2]];
-			
-			translate(p) rotate([-90,0,0]) translate([0,0,-baseT]) bolt(boltL, boltD, s);
+			translate(p) rotate([-90,0,0]) translate([0,0,-baseT]) bolt(boltL, boltD, sink);
 		}
 	}
 	
@@ -247,15 +233,6 @@ module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0,
 	}
 	else if (key=="box"){	
 		translate([baseW/2-X, 50+baseT, (baseH/2-Z)]) cube([baseW, 100, baseH], center=true);
-	}
-	else if (key=="axle"){
-		 axle_w_gear(GEARMODUL, axleNTooth, turnAngle, turnAngleMiddle, turnArmW, key="buildaxle");
-	}
-	else if (key=="bearingaxles"){
-		 axle_w_gear(GEARMODUL, axleNTooth, turnAngle, turnAngleMiddle, turnArmW, key="bearingaxles");
-	}
-	else if (key=="servogear"){
-		servo_gear(GEARMODUL, servoNTooth, GEART);
 	}
 }
 

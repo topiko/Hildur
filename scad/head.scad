@@ -1,4 +1,7 @@
-
+use <servo_mount.scad>;
+use <jetson.scad>;
+use <utils.scad>;
+include <standards.scad>;
 
 function get_r(R, T, x, sc) = sqrt(pow(R, 2)-pow((T/2-x)/sc, 2));
 
@@ -38,7 +41,7 @@ module head_close_bolts(R, T, botT, scY, Dr, boltD){
 		r = get_r(R, T, botT, sc) - Dr;
 		x = r*cos(phi);
 		y = r*sin(phi)*scY;
-		translate([x, y, 0]) bolt(15, boltD, -boltD/2); //cylinder(h=10, r=boltD/2);
+		translate([x, y, 0]) bolt(15, boltD, -boltD/2, baseL=20); //cylinder(h=10, r=boltD/2);
 	}
 }
 
@@ -111,23 +114,6 @@ module camera(cut){
 
 
 
-module bolt(h, d, sink){
-   	
-	// Expand the bolt sink hole by this amount: 
-	sinkExpFac = 1.1;
-	
-	// Gray bolts
-    	color("Gray")
-    	translate([0,0,sink])
-    	union(){
-	// bolt thread
-    	translate([0,0,d/2]) cylinder(h=h, r=d/2);
-	// bolt base
-    	cylinder(h=d/2, r1=d*sinkExpFac, r2=d/2*sinkExpFac);
-    	translate([0,0,-2*d - sink]) cylinder(h=2*d + sink, r=d*sinkExpFac);
-    	}
-}
-
 
 module backhead(R, T, shellT, botT, scY){
 	module boltrim(){
@@ -163,21 +149,69 @@ module backhead(R, T, shellT, botT, scY){
 	module backheadwadds(){	
 		head_shell(R, T, shellT, botT, scY, false);
 		boltrim();
-		neck();
+		servo_mount("base");
+		//neck();
 	}
 	
+	module servo_mount(key){
+		
+		servoRotX = -13;
+		servoShiftX = 0;
+		servoShiftY = -47;
+		servoShiftZ = -botT + 19.5;
+	
+		module servo_base(){
+			intersection(){
+			head_shell(R, T, 10, botT, scY, false);
+			translate([servoShiftX, servoShiftY, servoShiftZ])
+			rotate([servoRotX, 0, 0]){
+			rotate([-90,0,90]) servo_mount_w_axle(false, servoNTooth=14, 
+						     axleNTooth=26, 
+						     key="box");
+			}
+			}
+		}
+		module servo(key){
+			translate([servoShiftX, servoShiftY, servoShiftZ])
+			rotate([servoRotX, 0, 0]){
+			/*rotate([-90,0,90]) servo_mount_w_axle(false, servoNTooth=14, 
+						     axleNTooth=26, 
+						     key="top");*/
+			rotate([-90,0,90]) servo_mount_w_axle(false, servoNTooth=14, 
+						     axleNTooth=26, 
+						     key=key);
+}
+		}
+		
+		if (key=="base"){servo_base();}
+		else {servo(key);}
+	}	
 	module backheadwcuts(){
 		difference(){
 		backheadwadds();
-		translate([0,0,-1]) head_close_bolts(R, T, botT, scY, boltrimW - BOLT3LOOSE, BOLT3LOOSE);
+		// closing bolts
+		translate([0,0,-.6]) head_close_bolts(R, T, botT, scY, boltrimW - BOLT3LOOSE, BOLT3LOOSE);
+		// servo cuts:
+		servo_mount("bolts");
+		servo_mount("cut");
+		// Face cuts
+		face(R, T, shellT, botT, scY, key="cut"); 
+		// Fo cbles to escape:
+		dx = 30;
+		dy = -40;
+		cableR = 10;
+		rotX = 50;
+		for (i=[-1,1]){
+			translate([i*dx, dy, 0]) rotate([-rotX, 0,0]) cylinder(h=2*R, r=cableR, center=true);
+		}
 		}
 	}
 	color(FACECOLOR)
 	backheadwcuts();
-
+	//servo_mount("cut");
 }
 
-module face(R, T, shellT, botT, scY){
+module face(R, T, shellT, botT, scY, key="build"){
 	
 	
 	module jetsonattach(){
@@ -189,8 +223,8 @@ module face(R, T, shellT, botT, scY){
 	}	
 	
 
-	module jetsonmock(){
-		translate(jetsonPos) jetson("jetson");
+	module jetsonmock(heatsinkH=30){
+		translate(jetsonPos) jetson("jetson", heatsinkH);
 	} 
 	module boltrim(){
 		rimT = 3;
@@ -272,13 +306,18 @@ module face(R, T, shellT, botT, scY){
 		}
 	}
 	
-	color(FACECOLOR) facewcuts();
+	color(FACECOLOR)
+	if (key=="cut"){
+		jetsonmock(70);
+	}
+	else if (key=="build"){
+		facewcuts();}
 	//jetsonmock();
 	//jetsonattach();
 
 }
 
-$fn = 80;
+
 FACECOLOR = "DarkSlateGray";
 R = 75;
 T = 77;
@@ -304,17 +343,19 @@ boltrimW = 8;
 
 
 
-face(R, T, shellT, botT, scY); 
+//face(R, T, shellT, botT, scY); //, key="cut"); 
 /*difference(){
 face(R, T, shellT, botT, scY); 
 translate([0,0,-500+T/2-botT]) cube(1000, center=true);
 }*/
 
-//backhead(R, T, shellT, botT, scY);
+backhead(R, T, shellT, botT, scY);
 
 bodyR = 1.4*R;
 bodyT = 1.5*T;
 bodyScY = 1.3;
+
+
 //echo(bodyScY*bodyR*2);
 //neck_joint(10, true);
 //translate([0,-R-BEARINGR,BEARINGR+2]) rotate([0, -90, 0]) rotate([0,0, -10]) neck_joint(20, false);
@@ -327,54 +368,5 @@ bodyScY = 1.3;
 //bolt(10, BOLT3LOOSE, -BOLT3LOOSE/2);
 
 
-module jetson(key){
-
-	jetsonMountHoles = [[4, 17], [90, 17], [4, 75], [90, 75]];
-	jetsonCorners = [[0,0], [100, 0], [100,80], [0, 80]];
-	jetsonHeatSinkCorners = [[22, 38], [82, 38], [82, 78], [22, 78]];
-	jetsonConnectorsCorners = [[15, -1], [86, -1], [86, 22], [15, 22]];
-
-	mountH = 40;
-	mountD = 9;
-	breadboardT = 2;
-	
-	module jetson_(){
-		translate([0,0,-breadboardT/2]){
-		linear_extrude(height=breadboardT) polygon(points=jetsonCorners);	
-		linear_extrude(height=30) polygon(points=jetsonHeatSinkCorners);
-		linear_extrude(height=20) polygon(points=jetsonConnectorsCorners);
-		}
-	}
-	module pole(){
-		attachD = 5;
-		transitionH = mountD - attachD;
-		translate([0,0, breadboardT/2])
-		difference(){
-		union(){
-		translate([0,0,transitionH])cylinder(h=mountH-transitionH, r=mountD/2);
-		cylinder(h=transitionH, r1=attachD/2, r2=mountD/2);
-		}
-		bolt(6, BOLT3TIGHT, -BOLT3TIGHT/2);
-		}
-
-	}
-	// mount bars:
-	module mount(){
-		mirror([0,0,1])
-		for (p=jetsonMountHoles){
-			translate(p) pole();	
-	}
-	}
-	
-		
-	rotate([0,180,0])
-	
-	//mirror([0,0,1])
-	translate([-jetsonCorners[1][0]/2, -jetsonCorners[2][1]/2, 0])
-	if (key=="jetson"){jetson_();}
-	else if (key=="mount"){mount();}
-	else {jetson_(); mount();};
-	
-}
 //jetson("mount");
 //jetson("jetson");

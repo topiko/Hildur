@@ -11,3 +11,7 @@ BOLT3LOOSE=3.05;
 GEART = 6;
 GEARMODUL = 1;
 HELIXANGLE=45;
+
+$fn = 0; //50000;
+$fa = 1;
+$fs = .3;

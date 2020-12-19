@@ -1,7 +1,7 @@
 use <gears/gears.scad>;
 include <standards.scad>;
 
-module kst_servo(cut=false, hornR=7, hornT=7){
+module kst_servo(cut=false, hornR=7, hornT=7, topBearing=false){
 	W = 23;
 	H = 26.5;
 	T = 12;
@@ -36,6 +36,8 @@ module kst_servo(cut=false, hornR=7, hornT=7){
 		{
 		cylinder(h=hornT, r=hornR);
 		cylinder(h=12, r=4, center=true);
+		if (topBearing){
+			translate([0,0,hornT]) cylinder(h=BEARINGT+4*sp, r=BEARINGD/2+sp/2);}
 		}
 	}
 	
@@ -50,8 +52,9 @@ module kst_servo(cut=false, hornR=7, hornT=7){
 		translate([-.5,0,T/2])
 		rotate([-90,0,0]) 
 		{
-		cylinder(h=10, r=6/2);
+		translate([0,0,-1]) cylinder(h=11, r=6/2);
 		translate([0,0,10]) sphere(r=6/2);
+		translate([0, -3, -1]) cube([35,6, 1]);
 		}
 	}
 	
@@ -65,10 +68,11 @@ module kst_servo(cut=false, hornR=7, hornT=7){
 }
 
 
-module servo_gear(modul, ntooth, gearT, helix_angle=HELIXANGLE){
+module servo_gear(modul, ntooth, gearT, helix_angle=HELIXANGLE, topBearing=false){
 	// Gear for servo:
 	boreD = 5 - .03;
 	servoaxleH = 3.8;
+	sp = .07;
 	herringbone_gear(modul, ntooth, gearT, 
 			 boreD, 
 			 pressure_angle=20, 
@@ -76,11 +80,12 @@ module servo_gear(modul, ntooth, gearT, helix_angle=HELIXANGLE){
 			 optimized=false);
 
 	translate([0,0,servoaxleH]) 
-	difference(){
+	cylinder(h=gearT-servoaxleH, r=boreD/2+sp);
+	/*difference(){
 	cylinder(h=gearT-servoaxleH - 1, r=boreD/2);
 	cylinder(h=gearT-servoaxleH - 1, r=3/2);
-	}
-	
+	}*/
+	translate([0,0,gearT]) cylinder(h=BEARINGT, r=BEARINGAXLED/2-sp);
 
 }
 
