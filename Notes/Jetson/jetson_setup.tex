@@ -1,0 +1,139 @@
+
+%%% Template originally created by Karol Kozioł (mail@karol-koziol.net) and modified for ShareLaTeX use
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+%\renewcommand\familydefault{\sfdefault}
+%\usepackage{tgheros}
+%\usepackage[defaultmono]{droidmono}
+
+\usepackage{amsmath,amssymb,amsthm,textcomp}
+\usepackage{enumerate}
+\usepackage{multicol}
+%\usepackage{tikz}
+\usepackage{booktabs} 
+%\usepackage{geometry}
+\usepackage{fancyvrb}
+\usepackage{algorithm, algorithmic}
+\usepackage[justification=centering]{subfig}
+\usepackage[final]{pdfpages}
+\usepackage{hyperref}
+\usepackage{marginnote}
+\usepackage[top=20mm, bottom=20mm, outer=50mm, inner=10mm, heightrounded, marginparwidth=35mm, marginparsep=7mm]{geometry}
+
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\linia}{\rule{\linewidth}{0.5pt}}
+
+% my own titles
+\makeatletter
+\renewcommand{\maketitle}{
+\begin{center}
+\vspace{2ex}
+{\huge \textsc{\@title}}
+\vspace{1ex}
+\\
+\linia\\
+\@author \hfill \@date
+\vspace{4ex}
+\end{center}
+}
+\makeatother
+%%%
+
+% custom footers and headers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+\chead{}
+\rhead{}
+\lfoot{}
+\cfoot{--\thepage--}
+\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+%
+
+% code listing settings
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    aboveskip={1.0\baselineskip},
+    belowskip={1.0\baselineskip},
+    columns=fixed,
+    extendedchars=true,
+    breaklines=true,
+    tabsize=4,
+    prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+    frame=lines,
+    showtabs=false,
+    showspaces=false,
+    showstringspaces=false,
+    keywordstyle=\color[rgb]{0.627,0.126,0.941},
+    commentstyle=\color[rgb]{0.133,0.545,0.133},
+    stringstyle=\color[rgb]{01,0,0},
+    numbers=left,
+    numberstyle=\small,
+    stepnumber=1,
+    numbersep=10pt,
+    captionpos=t,
+    escapeinside={\%*}{*)}
+}
+
+%%%----------%%%----------%%%----------%%%----------%%%
+     
+\begin{document}
+\title{Jetson setup notes}
+\author{Topi}
+\date{\today}
+
+\maketitle
+
+\begin{enumerate}
+	\item Nvidia webpages have good setup guide. Needed to download etcher for image burning. 
+	\item For X11 forwarding need to enable in client .ssh/config - ForwardX11 yes.
+	\item You can check the jetpack version from file: /etc/nv\_tegra\_release - though the following script ought to take are of correct versions.
+	\item Using \url{https://github.com/dusty-nv/jetson-inference/blob/master/docs/aux-docker.md}
+	\begin{itemize}
+	\item \texttt{git clone --recursive https://github.com/dusty-nv/jetson-inference}
+	\item \texttt{cd jetson-inference}	
+	\item \texttt{docker/run.sh}
+	\end{itemize}
+	\item Opted for building from source - cannot get image feed from container\dots
+	\begin{itemize}
+	\item \texttt{sudo apt update}
+	\item \texttt{sudo apt-get install git cmake libpython3-dev python3-numpy}
+	\item \texttt{git clone --recursive https://github.com/dusty-nv/jetson-inference}
+	\item Create jetson-inference/build directory
+	\item In jetson-inference/build/ run: \texttt{cmake ../}
+	\item Select to install pytorch!
+	\item Model downloader can be found from: \texttt{cd jetson-inference/tools} and (\texttt{./download-models.sh})
+	\item Then, still in jetson-inference/build, run: \texttt{make} and \texttt{sudo make install} and \texttt{sudo ldconfig}
+	\end{itemize}
+	\item Now you just go to: \texttt{cd jetson-inference/build/aarch64/bin/} and run: \texttt{./imagenet.py images/orange\_0.jpg images/test/output\_0.jpg}
+	\item Turns out no HQ camera support on jetson\dots
+		\begin{itemize}
+			\item \url{https://developer.ridgerun.com/wiki/index.php?title=Raspberry_Pi_HQ_camera_IMX477_Linux_driver_for_Jetson#Installing_the_Driver_-_Option_A:_Debian_Packages_.28Recommended.29}
+			\item Seem rather impossible to resolve\dots
+		\end{itemize}
+	\item Create virtual env: \texttt{python3 -m venv venv}
+	\item \texttt{source venv/bin/activate}
+	\item Running the imagenet on rpi video: \texttt{./imagenet.py rtsp://192.168.1.72:8554/unicast file://test.mp4}
+\end{enumerate}
+
+
+
+
+
+%\bibliography{refs}
+%\bibliographystyle{plain}
+
+\end{document}
+
