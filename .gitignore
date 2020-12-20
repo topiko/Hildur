@@ -1,4 +1,8 @@
 *.bak
 *.stl
-
+*.bbl
+*.aux
+*.out
+*.log
+*.gz
 *.mp4
