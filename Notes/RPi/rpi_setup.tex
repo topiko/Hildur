@@ -1,0 +1,132 @@
+
+%%% Template originally created by Karol Kozioł (mail@karol-koziol.net) and modified for ShareLaTeX use
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+%\renewcommand\familydefault{\sfdefault}
+%\usepackage{tgheros}
+%\usepackage[defaultmono]{droidmono}
+
+\usepackage{amsmath,amssymb,amsthm,textcomp}
+\usepackage{enumerate}
+\usepackage{multicol}
+%\usepackage{tikz}
+\usepackage{booktabs} 
+%\usepackage{geometry}
+\usepackage{fancyvrb}
+\usepackage{algorithm, algorithmic}
+\usepackage[justification=centering]{subfig}
+\usepackage[final]{pdfpages}
+\usepackage{hyperref}
+\usepackage{marginnote}
+\usepackage[top=20mm, bottom=20mm, outer=50mm, inner=10mm, heightrounded, marginparwidth=35mm, marginparsep=7mm]{geometry}
+
+
+\newcommand{\linia}{\rule{\linewidth}{0.5pt}}
+
+% my own titles
+\makeatletter
+\renewcommand{\maketitle}{
+\begin{center}
+\vspace{2ex}
+{\huge \textsc{\@title}}
+\vspace{1ex}
+\\
+\linia\\
+\@author \hfill \@date
+\vspace{4ex}
+\end{center}
+}
+\makeatother
+%%%
+
+% custom footers and headers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{}
+\chead{}
+\rhead{}
+\lfoot{}
+\cfoot{--\thepage--}
+\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+%
+
+% code listing settings
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    aboveskip={1.0\baselineskip},
+    belowskip={1.0\baselineskip},
+    columns=fixed,
+    extendedchars=true,
+    breaklines=true,
+    tabsize=4,
+    prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+    frame=lines,
+    showtabs=false,
+    showspaces=false,
+    showstringspaces=false,
+    keywordstyle=\color[rgb]{0.627,0.126,0.941},
+    commentstyle=\color[rgb]{0.133,0.545,0.133},
+    stringstyle=\color[rgb]{01,0,0},
+    numbers=left,
+    numberstyle=\small,
+    stepnumber=1,
+    numbersep=10pt,
+    captionpos=t,
+    escapeinside={\%*}{*)}
+}
+
+%%%----------%%%----------%%%----------%%%----------%%%
+     
+\begin{document}
+\title{RPi setup}
+\author{Topi}
+\date{\today}
+
+\maketitle
+
+\begin{enumerate}
+	\item Burn 32 bit buster image using Rpi imager.
+	\item Create file ``ssh'' into boot partition.
+	\item Create file: wpa\_supplicant.conf into boot partition.
+	\begin{lstlisting}
+country=SE
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+ssid="#Telia-D5B7C8"
+psk="*G41H*2r#pE-faR4"
+}
+\end{lstlisting}
+	\item So the wpa did not work with the telia ssid - needed to change that to nkai wifi and then worked\dots What the heck\dots Anyhow, then in \texttt{/etc/wpa\_supplicant/} go and edit the file \texttt{sudo nano wpa\_supplicant.conf} and add the other ssids\dots
+	\item \texttt{sudo pat update \&\& sudo apt upgrade}
+	\item We try to install \url{https://github.com/mpromonet/v4l2rtspserver.git}
+	\begin{itemize}
+	\item \texttt{sudo apt install git cmake}
+	\item \texttt{git clone https://github.com/mpromonet/v4l2rtspserver.git}
+	\item \texttt{cd v4l2rtspserver \&\& sudo cmake . \&\& sudo make \&\& sudo make install}
+	\item Now you can run: \texttt{sudo v4l2rtspserver /dev/video0}
+	\item On you local machine: open vlc, media -> open network stream -> \texttt{rtsp://<rpi ip>:8554/unicast}
+	\item WORKS! Latency around 2sec.
+	\item \texttt{sudo raspistill -v -o test.jpg}
+	\end{itemize}
+
+\item Installed database \url{https://github.com/andymccurdy/redis-py}: \texttt{sudo apt get redis}, client: \texttt{pip3 install redis}
+	\item Redis is a server that is running on RPi. It is running there! Start, by \texttt{redis-server}
+	\item Subscribe from rpi to redis server - by python scipt.
+	\item On jetson write things into the database/server. 
+\end{enumerate}
+%\bibliography{refs}
+%\bibliographystyle{plain}
+\end{document}
+
