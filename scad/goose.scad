@@ -180,21 +180,25 @@ module head(L, W, T, create="face"){
 	
 	
 	module bolts(boltD){
-		boltpos = [-L/6*2, 0, L/6*2];
+		boltpos = [-L/2*.8, 0, L/2*.8];
 		for (x=boltpos){ 
 			for (k=[-1, 1]){
 				rot = k==-1 ? 0 : 180;
-				translate([x,T-4, k*W/2]) rotate([rot, 0, 0]) bolt(10, boltD, .5);
+				translate([x,T-4, k*W/2]) rotate([rot, 0, 0]) bolt(6, boltD, .5);
 			}
 		}
 	}	
 	module shiftedrpizero(key){
-		translate([7,0,0])
-		rotate([90,0,0]) rpizero(key=key, H=.5);
+		sX = L/2 - 65/2 - wallT_ - 4;  
+		translate([sX,0, 30/2 - W/2 + 2*wallT_  +2])
+		rotate([90,0,0]) rpizero(key=key, H=6, T=10);
 	}	
 	module shiftedcamera(key, H){
 		cameraR = 32/2;
-		translate([-L/2 + 21,-H,0]) rotate([-90,0,0]) {
+		cameraW = 38;
+		sX = (-L + cameraW)/2 + wallT_ + 3;
+		//-L/2 + cameraR + (W-cameraR*2)/2
+		translate([sX,-H,0]) rotate([-90,0,0]) {
 		camera(key, H=H);
 		translate([0,0,H-7])
 		difference(){
@@ -215,21 +219,25 @@ module head(L, W, T, create="face"){
 	module shiftedservo(key){
 		
 		module shifted_(){
-		translate([10, 6+1,-wallT_]) rotate([180,0,0]) 
-		servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=servoNTooth*1.6, turnAngleMiddle=0, turnArmW=9, roundtip=false, Xs=0, key=key, turnOverride=70, baseH=W);}
+			translate([10, 6+1,-wallT_]) 
+			rotate([180,0,0]) 
+			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=servoNTooth*1.6, turnAngleMiddle=0, turnArmW=9, roundtip=false, Xs=0, key=key, turnOverride=70, baseH=W);
+		}
 
 		servoNTooth = 16;
+
 		if (key=="top"){
-		intersection(){
-		shifted_();
-		bulk(R);
-		}}
-		else if (key=="bottom"){
-		echo("servo");
-		intersection(){
-		shifted_();
-		bulk(R-wallT*2-sp);
+			intersection(){
+				shifted_();
+				bulk(R);
+			}
 		}
+		else if (key=="bottom"){
+			echo("servo");
+			intersection(){
+				shifted_();
+				bulk(R - wallT_- .1); // - wallT*2);
+			}
 		}
 		else{shifted_();}
 	}
@@ -242,6 +250,9 @@ module head(L, W, T, create="face"){
 		shiftedservo("top"); //"bottom"); //"cutmild");
 		}	
 		shiftedservo("cutmild"); //"bottom"); //"cutmild");
+		
+		// Cut for usb charging:
+		shiftedrpizero("cutusb");
 
 		// face attach bolts:
 		bolts(BOLT3LOOSE);
@@ -259,19 +270,28 @@ module head(L, W, T, create="face"){
 		
 		
 		module face_(){
+		shiftedrpizero("poles");
 		translate([0,wallT_, 0])
 		mirror([0,1,0])
 		difference(){
 			shell(wallT=2*wallT_, T=faceT);
 			translate([0,faceT, 0]) mirror([0,1,0]) shell(wallT=wallT_ + .05, T= faceT-wallT_ );
-			shiftedcamera(true, H=camsink);
-			//shiftedrpizero("bolts");
 		}
-		shiftedrpizero("poles");
+		}	
+		module wcuts_(){
+			difference(){
+			face_();
+			shiftedcamera(true, H=camsink);
+			shiftedrpizero("bolts");
+			shiftedrpizero("cuts");
+			
+			}
+
 		shiftedcamera(false, H=camsink);
 		}
+
 		
-		module shiftedface(){translate([0,T,0]) face_();}
+		module shiftedface(){translate([0,T,0]) wcuts_();}
 		difference(){
 		shiftedface();
 		
@@ -283,6 +303,7 @@ module head(L, W, T, create="face"){
 	//cup();
 	if (create=="face"){face();}
 	else if (create=="cup"){cup();}
+	else if (create=="rpi"){translate([0,T,0]) shiftedrpizero("boardpoles");}
 	else if (create=="servobottom"){shiftedservo("bottom");}
 	else if (create=="servogear"){shiftedservo("servogear");}
 	else if (create=="axle"){shiftedservo("axle");}
@@ -291,17 +312,53 @@ module head(L, W, T, create="face"){
 	//shiftedrpizero();
 }
 
+
+module tiltaxle(L, R, key="axle"){
+	
+	axleR = R-1.2;	
+	module axle_(){
+	difference(){
+	translate([0,0,-R]) cylinder(h=L, r=R);
+	difference(){
+		translate([0,0,-250]) cube(500, center=true);
+		rotate([90,0,0]) cylinder(h=3*R, r=R, center=true);
+	}
+	rotate([90,0,0]) cylinder(h=2*R, r=BOLT3TIGHT/2, center=true);
+	internal_(0);
+	// cylinder(h=2*L, r=axleR);
+	}
+	}
+	
+	module internal_(sp, hadd=0){
+		translate([0,0,R])cylinder(h=2*(L-2*R) - hadd, r=axleR - sp);
+	}
+	
+	if (key=="axle"){axle_();}
+	else if (key=="adapter"){internal_(.05, hadd=-.6);}
+	
+}
+
 wallT = 1.5;
 
+//tiltaxle(20, 9/2);
+//tiltaxle(20, 9/2, key="adapter");
+
 headW = 130;
-//head(headW, 46, 33, create="face");
-head(headW, 46, 30, create="cup");
+head(headW, 46, 33, create="face");
+//head(headW, 46, 30, create="cup");
 //head(headW, 46, 33, create="servobottom");
+//head(headW, 46, 33, create="rpi");
 //head(110, 41, 30, create="servotop");
 
 // Beam:
-//dual_joint_arm(180, 44, 25, wallT=wallT);
+//dual_joint_arm(150, 44, 25, wallT=wallT);
 
+spacerH = 6.5;
+/*
+difference(){
+cylinder(h=spacerH, r=6/2);
+cylinder(h=spacerH, r=3.1/2);
+}*/
 
 // Axles:
 //axle_w_gear(GEARMODUL, axleNTooth, angle, turnAngleMiddle=angle/2, turnArmW=9, key="buildaxle");
