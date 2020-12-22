@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from utils.convert import vector
+from utils.functions import vector
 from utils.geodesic import geodesic
 
 def animation(p_0, p_f, path):
