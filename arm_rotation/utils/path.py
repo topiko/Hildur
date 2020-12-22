@@ -37,7 +37,7 @@ from utils.functions import angles, vector, Rz, R2
 def find_path(p_0, p_f, delta):
 
     '''
-    Finds a path from p_o to p_f that is constructed from discrete rotations by
+    Finds a path from p_0 to p_f that is constructed from discrete rotations by
     the angle delta, while following the geodesic reasonably closely.
     '''
 
@@ -190,8 +190,7 @@ def sequence(rotations, p_0, delta):
         if axis_z == True:
             R = Rz(d)
             axis_z = False
-
-        if axis_z == False:
+        else:
             R = R2(a, d)
             axis_z = True
 
