@@ -184,19 +184,26 @@ def sequence(rotations, p_0, delta):
 
     for n in rotations:
 
-        a, _ = angles(r)
         d = np.sign(n)*delta    # Rotation angle of a single rotation
 
+        # For rotations around the z-axis, the rotation matrix is the same at
+        # every step.
         if axis_z == True:
             R = Rz(d)
-            axis_z = False
-        else:
-            R = R2(a, d)
-            axis_z = True
 
         for _ in range(abs(n)):
+
+            # If we are rotating around the 2-axis, the rotation matrix must be
+            # recalculated after each step.
+            if axis_z == False:
+                a, _ = angles(r)
+                R = R2(a, d)
+
             k = k+1
             r = R @ r
             pts[k] = r
+
+        # Set the axis for the next batch of rotations
+        axis_z = not axis_z
 
     return pts, r
