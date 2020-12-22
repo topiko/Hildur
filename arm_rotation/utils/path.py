@@ -33,7 +33,13 @@ import numpy as np
 from utils.geodesic import geodesic
 from utils.functions import angles, vector, Rz, R2
 
+
 def find_path(p_0, p_f, delta):
+
+    '''
+    Finds a path from p_o to p_f that is constructed from discrete rotations by
+    the angle delta, while following the geodesic reasonably closely.
+    '''
 
     # Distance between the point p and the curve described by the points in C
     def dist(p, C):
@@ -61,11 +67,11 @@ def find_path(p_0, p_f, delta):
             return 2
 
     C = geodesic(p_0, p_f, 1000)    # The exact geodesic from p_0 to p_f
-    path = np.zeros((1000, 3))      # Matrix to store the points of the arm's path
+    pts = np.zeros((1000, 3))       # Matrix to store the points of the arm's path
 
     r_f = vector(p_f)
     r = vector(p_0)
-    path[0] = r
+    pts[0] = r
     k = 0
     i_best = 0  # Apparently this must have an initial value even if it isn't used
 
@@ -104,7 +110,7 @@ def find_path(p_0, p_f, delta):
         # Distance from the new position to the target point
         d_new = np.linalg.norm(r_p[i_best] - r_f)
 
-        # Update the position vector and store it in the matrix Z, unless the new
+        # Update the position vector and store it in pts, unless the new
         # position is worse than the old position, in which case stop.
         if d_new > d_old:
             break
@@ -112,7 +118,7 @@ def find_path(p_0, p_f, delta):
         r = r_p[i_best]
 
         k = k+1
-        path[k] = r
+        pts[k] = r
 
         # Index of the point in C that is closest to the best r_p
         i_min = int(ind[i_best])
@@ -143,15 +149,55 @@ def find_path(p_0, p_f, delta):
         i_min = int(np.argmin(d))
 
         # If we got closer to the target point, update the position vector to the
-        # best r_p and store it in Z
+        # best r_p and store it in pts
         if dist < dist_0:
             r = r_p[i_min]
             k = k+1
-            path[k] = r
+            pts[k] = r
 
         else:
             break
 
-    path = path[:k+1, :]  # Remove the remaining zero rows from Z
+    pts = pts[:k+1, :]  # Remove the remaining zero rows from pts
 
-    return path
+    return pts, r
+
+
+def sequence(rotations, p_0, delta):
+
+    '''
+    Gives the path arising from a specific sequence of rotations. The sequence
+    is defined by giving a set of integers n_1, n_2, ..., n_N. This means n_1
+    elementary rotations around the z-axis, followed by n_2 elementary
+    rotations around the '2-axis', etc. Positive/negative values of n_i
+    correspond to positive/negative rotation angles.
+    '''
+
+    N = np.sum(np.abs(rotations))   # Total number of elementary rotations
+    pts = np.zeros((N+1, 3))        # Position after each rotation stored here
+    r = vector(p_0)                 # Initial position
+    pts[0] = r
+
+    k = 0           # Counter for individual rotations
+    axis_z = True   # Keeps track of the rotation axis.
+                    # The first rotation is around the z-axis.
+
+    for n in rotations:
+
+        a, _ = angles(r)
+        d = np.sign(n)*delta    # Rotation angle of a single rotation
+
+        if axis_z == True:
+            R = Rz(d)
+            axis_z = False
+
+        if axis_z == False:
+            R = R2(a, d)
+            axis_z = True
+
+        for _ in range(abs(n)):
+            k = k+1
+            r = R @ r
+            pts[k] = r
+
+    return pts, r

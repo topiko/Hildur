@@ -10,7 +10,7 @@ def angles(r):
     if phi < 0:     # We want phi in the interval [0, 2*pi]
         phi = phi + 2*np.pi
 
-    return theta, phi
+    return np.array([theta, phi])
 
 
 # Find the vector defined by given spherical angles
