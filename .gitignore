@@ -6,3 +6,4 @@
 *.log
 *.gz
 *.mp4
+*.pyc
