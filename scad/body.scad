@@ -1,36 +1,31 @@
 use <servo_mount.scad>;
 use <servos.scad>;
 use <utils.scad>;
-use <rpi_zero.scad>;
-use <goose.scad>;
-use <servocontroller.scad>;
+use <electronics.scad>;
 include <standards.scad>;
-
+include <dims.scad>;
 
 angle = 110;
 servoNTooth = 15;
 axleNTooth = round(180/angle*servoNTooth);
-module body(L, W, T=0, wallT=1, key="none", R = 5){
-	
-	which_piece = "lower";
-	
-	armdirs = which_piece == "lower" ? ["up", "down"] : ["up", "up"];
 
+module body(L, W, T, wallT=3, key="none", R = 5){
+	
+	
 	Xs = 13;
 	topT = Xs; 
 	botT = T-topT;
 	attachH = 7;
 	axleX = (W/2 - 22.5);
 	bottomT=2;
+	cornerR = 3;
 
 	module servo(key="cutmild"){
-		
-		
-		//rotate([0, 90,0])
+			
 		module servo_(){
-		translate([axleX,0,L/2-Xs-wallT])
-		rotate([0, 90,0])
-		servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=axleNTooth, 
+			translate([axleX,0,L/2-Xs-wallT])
+			rotate([0, 90,0])
+			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=axleNTooth, 
 				   turnAngleMiddle=(angle/2) + 20, turnArmW=9,baseH=43, 
 				   roundtip=false, Xs=Xs, key=key);
 		}
@@ -315,13 +310,6 @@ module body(L, W, T=0, wallT=1, key="none", R = 5){
 		wcuts();
 	}
 	
-	// Thickness of arm
-	T = T==0 ? 2*Xs : T;
-
-
-	cornerR = 3;
-	topbotkey = "bottom"; //"bottom";
-
 
 	if (key=="mockup"){
 		translate([0,0, L/2]){
@@ -341,32 +329,8 @@ module body(L, W, T=0, wallT=1, key="none", R = 5){
 	else if (key=="bearingaxles" || key=="servogear" || key=="axle"){
 		servo(key=key);
 	}
-	//motormounts();
-	//shiftedservocontroller();
-	//shiftedmicarray();
-	//shiftedbattery();
-	//arm("vv");
-	//servo("cutmild");
-	//beam_full(topbotkey);
 }
 
-bodyH = 170;
-bodyW = 74;
-bodyT = 33;
-wallT = 3.0;
-//body(bodyH, bodyW, 30, wallT=wallT, key="bottom");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="top");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="bottom");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="servobottom");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="axle");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="bearingaxles");
-body(bodyH, bodyW, bodyT, wallT=wallT, key="servogear");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="top");
-//body(bodyH, bodyW, bodyT, wallT=wallT, key="mockup");
-//
-neckL = 5;
-headW = 130;
-headL = 46;
-headT = 33;
-//translate([0,12,headL/2 + bodyH + neckL]) head(headW, headL, headT, create="mockup");
+key = "top"; // "bottom", "servobottom", "axle", "bearingaxles", "servogear", "top" 
+body(bodyH, bodyW, bodyT, key=key);
 
