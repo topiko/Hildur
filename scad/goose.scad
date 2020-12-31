@@ -211,7 +211,7 @@ module head(L, W, T, create="face"){
 	module ledrow(N){
 		dx = 7;
 		y = T - 2*dx + 1;
-		translate([2*N*dx, y, 0])
+		translate([3*N*dx, y, 0])
 		for (i=[-N:1:N]){
 			translate([i*dx, 0, 0])cylinder(h=W*2, r=3/2);
 		}
@@ -221,7 +221,7 @@ module head(L, W, T, create="face"){
 		module shifted_(){
 			translate([10, 6+1,-wallT_]) 
 			rotate([180,0,0]) 
-			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=servoNTooth*1.6, turnAngleMiddle=0, turnArmW=9, roundtip=false, Xs=0, key=key, turnOverride=70, baseH=W);
+			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=servoNTooth*1.6, turnAngleMiddle=0, turnArmW=9, roundtip=false, Xs=0, key=key, turnOverride=80, baseH=W);
 		}
 
 		servoNTooth = 16;
@@ -246,9 +246,14 @@ module head(L, W, T, create="face"){
 		
 		difference(){
 		union(){
-		shell();	
-		shiftedservo("top"); //"bottom"); //"cutmild");
-		}	
+			shell();	
+			shiftedservo("top"); //"bottom"); //"cutmild");
+		}
+			
+		// usb charge:
+		translate([0,T,0]) shiftedrpizero("cuts");
+		
+		// servo openings:
 		shiftedservo("cutmild"); //"bottom"); //"cutmild");
 		
 		// Cut for usb charging:
@@ -256,8 +261,10 @@ module head(L, W, T, create="face"){
 
 		// face attach bolts:
 		bolts(BOLT3LOOSE);
+		
 		// Wire hole
-		translate([0, 14+4, -W/2]) linear_extrude(W, center=true) offset(2) square([14,2], center=true);
+		translate([0, 14+3, -W/2]) linear_extrude(W, center=true) offset(2) square([10,1], center=true);
+		
 		// Leds:
 		ledrow(2);
 		}
@@ -307,34 +314,54 @@ module head(L, W, T, create="face"){
 	else if (create=="servobottom"){shiftedservo("bottom");}
 	else if (create=="servogear"){shiftedservo("servogear");}
 	else if (create=="axle"){shiftedservo("axle");}
+	else if (create=="bearingaxles"){shiftedservo("bearingaxles");}
+	else if (create=="mockup"){
+		translate([0,-7, 0]){
+		bulk(R, T=T);
+		//camera();
+		shiftedcamera(true, H= -10);
+		}
+	}
 	//shiftedservo("cutmild"); //"bottom"); //"cutmild");
 	//shiftedcamera();
 	//shiftedrpizero();
 }
 
 
-module tiltaxle(L, R, key="axle"){
+module tiltaxle(L, R, R2=6, key="axle"){
+
+	// R2 is the radius of the servo tilt axle.
 	
 	axleR = R-1.2;	
 	module axle_(){
 	difference(){
-	translate([0,0,-R]) cylinder(h=L, r=R);
+	translate([0,0,-R2]) cylinder(h=L+R2, r=R);
 	difference(){
 		translate([0,0,-250]) cube(500, center=true);
-		rotate([90,0,0]) cylinder(h=3*R, r=R, center=true);
+		rotate([90,0,0]) cylinder(h=3*R, r=R2, center=true);
 	}
 	rotate([90,0,0]) cylinder(h=2*R, r=BOLT3TIGHT/2, center=true);
-	internal_(0);
+	translate([0,0,R2]) internal_(0);
 	// cylinder(h=2*L, r=axleR);
 	}
 	}
 	
-	module internal_(sp, hadd=0){
-		translate([0,0,R])cylinder(h=2*(L-2*R) - hadd, r=axleR - sp);
+	pipeL = (L-R2);
+	module internal_(sp, hadd=0, H=0){
+		H = H == 0 ? pipeL + hadd : H;
+		cylinder(h=H, r=axleR - sp);
 	}
 	
 	if (key=="axle"){axle_();}
-	else if (key=="adapter"){internal_(.05, hadd=-.6);}
+	else if (key=="adapter"){
+		
+		sp = .03;
+		r = 5;
+		angle=90;
+		rotate_extrude(angle=angle) translate([r + R, 0]) circle(R);
+		translate([r+R,0,0]) rotate([90,0,0])  internal_(sp, hadd=-.6, H=pipeL);
+		translate([0,r+R,0]) rotate([0,-90,0]) internal_(sp, hadd=-.6, H=pipeL);
+	}
 	
 }
 
@@ -344,11 +371,23 @@ wallT = 1.5;
 //tiltaxle(20, 9/2, key="adapter");
 
 headW = 130;
-head(headW, 46, 33, create="face");
-//head(headW, 46, 30, create="cup");
-//head(headW, 46, 33, create="servobottom");
-//head(headW, 46, 33, create="rpi");
-//head(110, 41, 30, create="servotop");
+headL = 46;
+headT = 33;
+//head(headW, headL, headT, create="face");
+//head(headW, headL, headT, create="cup");
+//head(headW, headL, headT, create="servobottom");
+//head(headW, headL, headT, create="rpi");
+//head(headW, headL, headT, create="servotop");
+
+// Inside face pieces:
+
+//head(headW, headL, headT, create="servobottom");
+//head(headW, headL, headT, create="servogear");
+//head(headW, headL, headT, create="bearingaxles");
+//head(headW, headL, headT, create="axle");
+//tiltaxle(6+14, (9-.07)/2);
+tiltaxle(6+14, (9-.07)/2, key="adapter");
+
 
 // Beam:
 //dual_joint_arm(150, 44, 25, wallT=wallT);

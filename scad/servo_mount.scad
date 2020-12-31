@@ -22,7 +22,7 @@ module axle_w_gear(GEARMODUL, ntooth, turnAngle, turnAngleMiddle=0, turnArmW=6, 
 	module bearing_axles(){
 		addH = 3;
 		// Spacing between bearing bore wall and axle.
-		sp_bearing = .05;
+		sp_bearing = .02;
 		
 		
 		bearingAxleL = 2*sp + BEARINGT + 3;
@@ -188,7 +188,7 @@ module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0,
 	module bolts(boltD=boltsD){
 		boltD = (key=="bolts") ? BOLT3TIGHT : key=="top" ? BOLT3TIGHT : boltD;
 		sink = .5;
-		boltL = baseT*3;
+		boltL = baseT*1.9;
 		s2 =.2;
 		s1 = roundtip ? 9 : s2;
 		boltshift = roundtip ? -.5 : 0; 
@@ -199,12 +199,11 @@ module servo_mount_w_axle(top, servoNTooth=14, axleNTooth=26, turnAngleMiddle=0,
 			  [9, 0, botrow, s2], [9, 0, toprow, s2],
 			  [xservoend, 0, botrow, s2], [xservoend, 0, toprow, s2],
 			  [xservoend-10, 0, toprow, s2]];
-		echo(boltD);	
 		for (p=points){
 			s  =p[3];
 			p = [p[0], p[1], p[2]];
 			
-			translate(p) rotate([-90,0,0]) translate([0,0,-baseT]) bolt(boltL, boltD, s);
+			translate(p) rotate([-90,0,0]) translate([0,0,-baseT]) bolt(boltL-s - boltD/2, boltD, s, baseL=s);
 		}
 	}
 	

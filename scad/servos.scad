@@ -1,5 +1,50 @@
 use <gears/gears.scad>;
+use <utils.scad>;
 include <standards.scad>;
+
+module dymond_servo(key="mockup", boltH=2){
+
+	dims = [23.5, 22, 10.2];
+	mountpos = [[-2, dims[2]/2], [dims[0] + 2, dims[2]/2]];
+	hornpos = [5, dims[1], dims[2]/2];
+	hornH = 5;
+	boltD = BOLT3TIGHT;
+
+	module horn(){
+		rotate([-90,0,0])
+		hull(){
+		cylinder(h=hornH, r=10/2);
+		translate([0,-5,0]) cylinder(h=hornH-1, r=5/2);	
+		}
+	}
+
+	module mountarms(H=2, key="bolts"){
+		armW = 5;
+		if (key=="bolts"){
+			for (x=[-armW/2, dims[0] + armW/2]){
+				translate([x, dims[1] + H, dims[2]/2]) rotate([90,0,0]) bolt(2*H, boltD, 0);
+			}
+		}
+		else if (key=="arm"){
+		translate([-armW, dims[1]-2, 0]) cube([dims[1] + 2*armW, 2, dims[2]]);
+		}
+	}
+	module servo(key="mockup"){
+		if (key=="mockup"){
+		translate(hornpos) rotate([0,90,0]) horn();
+		mountarms(H=boltH, key="arm");
+		cube(dims);	
+		}
+		else if (key=="bolts"){
+			mountarms(H=boltH, key="bolts");
+		}
+	}
+
+	translate(-hornpos)
+	servo(key);
+	 
+}
+
 
 module kst_servo(cut=false, hornR=7, hornT=7, topBearing=false){
 	W = 23;
@@ -52,9 +97,9 @@ module kst_servo(cut=false, hornR=7, hornT=7, topBearing=false){
 		translate([-.5,0,T/2])
 		rotate([-90,0,0]) 
 		{
-		translate([0,0,-1]) cylinder(h=11, r=6/2);
-		translate([0,0,10]) sphere(r=6/2);
-		translate([0, -3, -1]) cube([35,6, 1]);
+		translate([0,0,-1.3]) cylinder(h=8+1.3, r=7/2);
+		translate([0,0,8]) sphere(r=7/2);
+		translate([0, -3.5, -1.3]) cube([35,7, 1.3]);
 		}
 	}
 	
@@ -72,7 +117,7 @@ module servo_gear(modul, ntooth, gearT, helix_angle=HELIXANGLE, topBearing=false
 	// Gear for servo:
 	boreD = 5 - .03;
 	servoaxleH = 3.8;
-	sp = .07;
+	sp = .02;
 	herringbone_gear(modul, ntooth, gearT, 
 			 boreD, 
 			 pressure_angle=20, 
@@ -85,7 +130,7 @@ module servo_gear(modul, ntooth, gearT, helix_angle=HELIXANGLE, topBearing=false
 	cylinder(h=gearT-servoaxleH - 1, r=boreD/2);
 	cylinder(h=gearT-servoaxleH - 1, r=3/2);
 	}*/
-	translate([0,0,gearT]) cylinder(h=BEARINGT, r=BEARINGAXLED/2-sp);
+	translate([0,0,gearT]) cylinder(h=BEARINGT+0.5, r=BEARINGAXLED/2-sp);
 
 }
 

@@ -27,7 +27,7 @@ module rpizero(key, H=5, T=2){
 	}
 	
 	module usbcharge(){
-		dy = 5;
+		dy = 2.;
 		translate([dims[0]/2, -dims[1]/2+11, -1.5])
 		hull(){
 		for (j=[-1,1]) translate([0, j*dy, 0]) rotate([0,90,0]) cylinder(h=20, r=3.5);
@@ -35,7 +35,7 @@ module rpizero(key, H=5, T=2){
 	}
 	
 	module pwrswitch(){
-		translate([dims[0]/2 - 18, -dims[1]/2 - 2, -H-5]) cube([5, 2, 10]);
+		translate([dims[0]/2 - 15.5, -dims[1]/2 - 2, -H-5]) cube([5, 2, 10]);
 	}
 	
 	translate([0,0,H])
