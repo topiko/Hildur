@@ -126,6 +126,16 @@ psk="*G41H*2r#pE-faR4"
 	\item Subscribe from rpi to redis server - by python scipt.
 	\item On jetson write things into the database/server. 
 \end{enumerate}
+Enabling servo control using 16ch adafruit controller board.
+\begin{enumerate}
+	\item create virtual env. \texttt{python3 -m venv venv}
+	\item activate it: \texttt{source venv/bin/activate}
+	\item  \texttt{sudo apt-get install python-smbus}
+	\item \texttt{sudo apt-get install i2c-tools}
+	\item Read the i2c devices: \texttt{sudo i2cdetect -y 1}
+	\item install circuit python servokit: \texttt{pip3 install adafruit-circuitpython-servokit}
+	\item add topiko to i2c group for permissions: \texttt{sudo adduser topiko i2c}
+\end{enumerate}<++>
 %\bibliography{refs}
 %\bibliographystyle{plain}
 \end{document}

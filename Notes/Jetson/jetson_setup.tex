@@ -126,6 +126,11 @@
 	\item Create virtual env: \texttt{python3 -m venv venv}
 	\item \texttt{source venv/bin/activate}
 	\item Running the imagenet on rpi video: \texttt{./imagenet.py rtsp://192.168.1.72:8554/unicast file://test.mp4}
+	\item Install redis server: \texttt{sudo apt install redis}
+	\item It starts when booted\dots
+	\item \texttt{sudeo service redis status}
+	\item redis bind on localhost is mayhem! You can config it in /etc/redis/redis.conf - bind  localhost (127\dots) (comment it out - but beaware of the security risk.)
+	\item Set the protected mode to no - again in the redis config file.	
 \end{enumerate}
 
 
