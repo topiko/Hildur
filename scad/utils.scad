@@ -1,5 +1,7 @@
 include <standards.scad>;
 
+function pitchD(ntooth, modul) = ntooth*modul;
+function gearD(ntooth, modul) = ntooth*modul + 2*modul;
 module bolt(h, d, sink, baseL=5){
    	
 	// Expand the bolt sink hole by this amount: 

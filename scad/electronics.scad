@@ -129,7 +129,7 @@ module rpizero(key, H=5, T=2){
 }
 			}
 			else if (key=="bolts"){
-				mirror([0,0,1]) bolt(H+dims[2],BOLT3TIGHT, 0);
+				mirror([0,0,1]) bolt(H - .2, BOLT3TIGHT, 0);
 			}
 		}
 	}

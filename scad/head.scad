@@ -35,11 +35,10 @@ module head(L, W, T, create="face"){
 	}
 	
 	module shell(wallT=wallT_, T=T){	
-	difference(){
-	bulk(R, T=T);
-	translate([0,wallT_, 0]) bulk(R - wallT, T=T);
-	
-	}
+		difference(){
+			bulk(R, T=T);
+			translate([0,wallT_, 0]) bulk(R - wallT, T=T);
+		}
 	}
 	
 	
@@ -60,15 +59,15 @@ module head(L, W, T, create="face"){
 	module shiftedcamera(key, H){
 		cameraR = 32/2;
 		cameraW = 38;
-		sX = (-L + cameraW)/2 + wallT_ + 3;
-		//-L/2 + cameraR + (W-cameraR*2)/2
+		sX = (-L + cameraW)/2 + wallT_ + 12;
+
 		translate([sX,-H,0]) rotate([-90,0,0]) {
-		camera(key, H=H);
-		translate([0,0,H-7])
-		difference(){
-			cylinder(h=7, r=cameraR+2);	
-			cylinder(h=7, r=cameraR);
-		}
+			camera(key, H=H);
+			translate([0,0,H-7])
+			difference(){
+				cylinder(h=7, r=cameraR+2);	
+				cylinder(h=7, r=cameraR);
+			}
 		}
 	}
 	
@@ -80,12 +79,21 @@ module head(L, W, T, create="face"){
 			translate([i*dx, 0, 0])cylinder(h=W*2, r=3/2);
 		}
 	}	
+
 	module shiftedservo(key){
-		
+		hornarmL = 20;
+		turnphi = 110;
+		lowphi = 50;
+			
+		phimiddle = 270-lowphi + turnphi/2;	
 		module shifted_(){
-			translate([10, 6+1,-wallT_]) 
-			rotate([180,0,0]) 
-			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=servoNTooth*1.6, turnAngleMiddle=0, turnArmW=9, roundtip=false, Xs=0, key=key, turnOverride=80, baseH=W);
+			translate([neckX, 0, -W/2+wallT]) 
+			mirror([1,0,0])
+			rotate([0,90,0]) 
+			servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, 
+					    turnAngle=turnphi, armAngleMiddle=phimiddle, 
+					    axlehornDin=AXLEHORNDIN, type=2, 
+					    hornarmL=hornarmL);
 		}
 
 		servoNTooth = 16;
@@ -93,14 +101,13 @@ module head(L, W, T, create="face"){
 		if (key=="top"){
 			intersection(){
 				shifted_();
-				bulk(R);
+				bulk(R - wallT_- .1); // - wallT*2);
 			}
 		}
 		else if (key=="bottom"){
-			echo("servo");
 			intersection(){
 				shifted_();
-				bulk(R - wallT_- .1); // - wallT*2);
+				bulk(R);
 			}
 		}
 		else{shifted_();}
@@ -111,14 +118,14 @@ module head(L, W, T, create="face"){
 		difference(){
 		union(){
 			shell();	
-			shiftedservo("top"); //"bottom"); //"cutmild");
+			shiftedservo("bottom"); //"bottom"); //"cutmild");
 		}
 			
 		// usb charge:
 		translate([0,T,0]) shiftedrpizero("cuts");
 		
 		// servo openings:
-		shiftedservo("cutmild"); //"bottom"); //"cutmild");
+		shiftedservo("cut"); //"bottom"); //"cutmild");
 		
 		// Cut for usb charging:
 		shiftedrpizero("cutusb");
@@ -127,10 +134,10 @@ module head(L, W, T, create="face"){
 		bolts(BOLT3LOOSE);
 		
 		// Wire hole
-		translate([0, 14+3, -W/2]) linear_extrude(W, center=true) offset(2) square([10,1], center=true);
+		translate([-5, -T/3, +9 +wallT_ - W/2]) rotate([90,0,0]) linear_extrude(W, center=true) offset(2) square([2,14], center=true);
 		
 		// Leds:
-		ledrow(2);
+		// ledrow(2);
 		}
 		 
 	}	
@@ -141,13 +148,13 @@ module head(L, W, T, create="face"){
 		
 		
 		module face_(){
-		shiftedrpizero("poles");
-		translate([0,wallT_, 0])
-		mirror([0,1,0])
-		difference(){
-			shell(wallT=2*wallT_, T=faceT);
-			translate([0,faceT, 0]) mirror([0,1,0]) shell(wallT=wallT_ + .05, T= faceT-wallT_ );
-		}
+			shiftedrpizero("poles");
+			translate([0,wallT_, 0])
+			mirror([0,1,0])
+			difference(){
+				shell(wallT=2*wallT_, T=faceT);
+				translate([0,faceT, 0]) mirror([0,1,0]) shell(wallT=wallT_ + .05, T= faceT-wallT_ );
+			}
 		}	
 		module wcuts_(){
 			difference(){
@@ -171,24 +178,22 @@ module head(L, W, T, create="face"){
 		}
 		
 	}
-	//cup();
+
 	if (create=="face"){face();}
 	else if (create=="cup"){cup();}
+	else if (create=="axleparts"){shiftedservo("axleparts");}
 	else if (create=="rpi"){translate([0,T,0]) shiftedrpizero("boardpoles");}
 	else if (create=="servobottom"){shiftedservo("bottom");}
+	else if (create=="servotop"){shiftedservo("top");}
 	else if (create=="servogear"){shiftedservo("servogear");}
 	else if (create=="axle"){shiftedservo("axle");}
 	else if (create=="bearingaxles"){shiftedservo("bearingaxles");}
 	else if (create=="mockup"){
 		translate([0,-7, 0]){
 		bulk(R, T=T);
-		//camera();
 		shiftedcamera(true, H= -10);
 		}
 	}
-	//shiftedservo("cutmild"); //"bottom"); //"cutmild");
-	//shiftedcamera();
-	//shiftedrpizero();
 }
 
 
@@ -234,12 +239,17 @@ wallT = 1.5;
 //tiltaxle(20, 9/2);
 //tiltaxle(20, 9/2, key="adapter");
 
-headW = 130;
-headL = 46;
-headT = 33;
+/*headW = 135;
+headL = 46.5; // + 2*wallT;
+headT = 33;*/
 //head(headW, headL, headT, create="face");
 //head(headW, headL, headT, create="cup");
-//head(headW, headL, headT, create="servobottom");
+
+
+//head(headW, headL, headT, create="axleparts");
+//head(headW, headL, headT, create="servotop");/*
+head(headW, headL, headT, create="servobottom");
+
 //head(headW, headL, headT, create="rpi");
 //head(headW, headL, headT, create="servotop");
 
@@ -250,7 +260,7 @@ headT = 33;
 //head(headW, headL, headT, create="bearingaxles");
 //head(headW, headL, headT, create="axle");
 //tiltaxle(6+14, (9-.07)/2);
-tiltaxle(6+14, (9-.07)/2, key="adapter");
+//tiltaxle(6+14, (9-.07)/2, key="adapter");
 
 
 // Beam:

@@ -4,36 +4,85 @@ use <utils.scad>;
 use <electronics.scad>;
 include <standards.scad>;
 include <dims.scad>;
-
+/*
 angle = 110;
 servoNTooth = 15;
 axleNTooth = round(180/angle*servoNTooth);
+*/
+module battrack(key, wallT=3){
+	batD=18.2;
+	batL=66;
+	bottomT=1;
+	T = 7;
+	W = bodyW - wallT*2;	
+	H = 3*batD  + 8;
+	module batt(){
+		for (k=[-1,0,1]){
+			translate([0, k*batD, batD/2 + bottomT]) rotate([0,90,0]) cylinder(h=batL + 2, r=batD/2, center=true);
+		}
+	}
+	module groowplate(key, W=W,  boltD=BOLT3TIGHT){
+		if (key=="plate"){
+			difference(){
+				translate([0, 0, T/2]) cube([W, H, T], center=true);
+				batt();					
+			}
+		}
+		else if (key=="bolts"){
+			for (i=[-1,1]){
+				translate([bodyW/2*i, 0, 0])
+				for (j=[-batD, 0, batD]){
+					translate([0, j, T/2]) rotate([0, -i*90, 0]) bolt(6, boltD, .5);
+				}
+			}
+		}
+	}
+		
+	module top(key){
+		Z = key == "mocktop" || key == "bolts" ? bottomT*2 + batD : 0;
+		translate([0,0,Z])
+		mirror([0,0,1])
+		if (key=="top"){
+			groowplate("plate", W=W-2*TIGHTSP);
+		}
+		else if (key=="bolts"){
+			groowplate("bolts");
+		}
+	}
+
+	if (key=="bottom"){groowplate("plate");}
+	else if (key=="top"){top("top");}
+	else if (key=="mocktop"){top("mocktop");}
+	else if (key=="cut"){top("bolts"); batt();}
+}	
+
+
 
 module body(L, W, T, wallT=3, key="none", R = 5){
 	
 	
-	Xs = 13;
-	topT = Xs; 
-	botT = T-topT;
 	attachH = 7;
-	axleX = (W/2 - 22.5);
-	bottomT=2;
+	bottomT=1;
+	topT = attachH+bottomT; 
+	botT = T-topT;
+	echo(botT);
+	axleX = 8;
 	cornerR = 3;
 
-	module servo(key="cutmild"){
-			
+	module servo(key="cut"){
+		hornarmL = 20;
+		mountT=SERVOBEARINGDIMS[1]+2;
 		module servo_(){
-			translate([axleX,0,L/2-Xs-wallT])
-			rotate([0, 90,0])
-			servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=axleNTooth, 
-				   turnAngleMiddle=(angle/2) + 20, turnArmW=9,baseH=43, 
-				   roundtip=false, Xs=Xs, key=key);
+			translate([neckX,-botT, L/2 - wallT])
+			mirror([1,0,0])
+			servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, 
+					    turnAngle=90, axleL=12, 
+					    axlehornDin=AXLEHORNDIN, type=3, 
+					    hornarmL=hornarmL, T=mountT);
+
 		}
 
 		module centered_mount(){
-			translate([0,0,-Xs])
-			rotate([-90,0,0])
-			translate([-axleX, 0, -L/2+Xs+wallT])
 			difference(){
 				servo_();
 				bodyshell(wallT=wallT+.1, key="bottom");
@@ -41,10 +90,11 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 			}
 		}
 
-		if (key=="bottom"){
+		if (key=="top"){			
+			// TODO;
 			difference(){
-			centered_mount();
-			shiftedmpu6050();
+				servo_("top");
+				bodyshell(wallT=wallT+.1, key="bottom");
 			}
 		}
 		else {servo_();}
@@ -90,9 +140,10 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 		
 	}
 
-	module bodyshell(wallT=wallT, key="bottom", bottomT=bottomT){
-		echo(wallT);	
-		sp = .04;
+	module bodyshell(wallT=wallT, key="bottom", bottomT=bottomT, L=L, W=W, T=T, R=R){
+
+		sp = TIGHTSP;
+
 		module bulk(L, W, T, R_){
 			rotate([-90,0,0])
 			linear_extrude(height=T) offset(R_) square([W-2*R, L-2*R], center=true);
@@ -108,7 +159,7 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 		}
 		
 		module attachring(L, W, T, wallT){
-			translate([0,T, 0]) shell(L, W, T, R, wallT=wallT, bottomT=0);
+			translate([0,T, 0]) shell(L, W, T, R, wallT=wallT, bottomT=-.1);
 		}	
 
 		if (key=="top"){
@@ -131,7 +182,25 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 	
 
 	}
-	
+	module shiftedbattrack(key){
+		posX = 0;
+		posY = -botT;
+		posZ = -L/2 + wallT + 57.5 + 18*3/2; //-17;
+		if (key!="top"){
+			translate([posX, posY, posZ]) rotate([-90,0,0]) 
+			battrack(key);
+		}
+		else if (key=="top"){
+			battrack(key);
+			// TODO;
+			translate([-W/2 + wallT + 2 + 13,0,0])
+			rotate([0,0,90])			
+			servoctrl(H=1+bottomT, key="mockup", boltH=bottomT);
+		}
+
+	}	
+
+	shiftedbattrack("top");
 	module shiftedservocontroller(key="mockup"){
 		posX = -(W/2 - 16);
 		posY = topT;
@@ -149,45 +218,50 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 		translate([0, posY, posZ]) rotate([90, 0, 0]) micarray(H=1 + bottomT, key=key, boltH=bottomT);	
 	}
 	
-	module shiftedbattery(){
-		middleY = (topT - botT)/2;
-		battT = 18;
-		posZ = -20;
-		translate([0, -botT+battT/2, posZ]) 
-		rotate([0,90,0])
-		battery("2S");
-	}
-	module motormounts(keymounts="cut"){
-		
-		sp = 2;
-		axleD=botT - bottomT - sp*2;
-		echo(axleD);
-		axleR=axleD/2;
-		axleH = 20;
-		boltsN = 4;
-		boltdedge=6;
-		motorAxleY = -botT + bottomT + axleR + sp;
 
-		dx = (W - 2*boltdedge)/(boltsN - 1) - .00001;
-		module boltrow(Z){
-		for (x=[-W/2+boltdedge:dx:W/2-boltdedge]){
-			translate([x, -botT, Z]) rotate([-90,0,0]) bolt(T-2*wallT, BOLT3TIGHT, .0);
-		}
-		}
-		
-		module wheelaxle(Z){
-			translate([0,motorAxleY,Z])
-			rotate([0, 90 , 0]) cylinder(h=2*W, r=axleR, center=true);
-		}
-		boltsLow = 4.5;
-		boltsH = 30;
+	module motormounts(key="cut"){
 
-		boltrow(-L/2 + boltsLow);
-		boltrow(-L/2 + boltsLow + boltsH);
-		wheelaxle(-L/2 + boltsH/2 + boltsLow);			
+		R = WHEELBEARINGDIMS[1];
+		T = WHEELBEARINGDIMS[2];
+		mountT= R+1;
+		axleL = 13;
+		wheelbearingXout = T- wallT/2;
+		addXR = 6;
+		module unit(key){
+			translate([W/2 + wheelbearingXout, -botT, -L/2 + wallT + R/2 + addXR])
+			rotate([0,90,0])
+			servo_mount_aligned(key=key, servoNtooth=22, 
+					    turnAngle=110, axleL=axleL, bearingdims=WHEELBEARINGDIMS, 
+					    axlehornDin=AXLEHORNDIN, type=5, addXR=addXR, T=mountT);
+		}
+
+		module both(key){	
+			mirror([1,0,0])unit(key);
+			unit(key);
+		}
+				
+		if (key=="bottom"){
+			intersection(){
+				both(key);
+				bodyshell(key="bulk");
+			}
+		}
+		else if (key=="top"){
+			subst = 2*(wallT + TIGHTSP);
+			intersection(){
+				both(key);
+				bodyshell(key="bulk", L=L-subst, W=W-subst, T=T-subst, R=cornerR - subst/2);
+			}
+		}
+		else if (key=="cut"){
+			both(key);
+		}
+
 	
 	}
 	
+
+
 	module arm(key){
 		
 		module servo_(key, boltH=2){	
@@ -216,18 +290,7 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 		linear_extrude(5*wallT, center=true) offset(corner) square([cableW - 2*corner, .0001], center=true);
 	}
 	
-	module cable_cutter(cableW=20, cableT=2, L_path=45, end="left"){
-		tt = wallT + cableT;
-		R = (pow(L_path,2) + pow(tt, 2))/(2*tt);
-		corner = cableT/2;
-		z = L/2 - L_path - Xs;
-		 
-		translate([axleX, -R + tt - T/2,z])
-		rotate([0,-90,0]) 
-		rotate_extrude(angle=90) translate([R-corner,0,0]) offset(corner) square([.001, cableW - 2*corner], center=true);
-	}
 	
-
 	module shiftedmpu6050(key="cutfromservo"){
 		mpudims = [21.4, 17, 2];
 		if (key=="cutfromservo"){
@@ -240,63 +303,50 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 	}
 	
 
-	module battrack(){
-		batD=18.2;
-		batL=66;
-		posX = 0;
-		posY = -botT + bottomT;
-		posZ = -17;
-		T = 3;
-		translate([posX, posY, posZ])
-		difference(){
-			translate([0, (T + bottomT)/2 - bottomT, 0]) cube([batL/3*2, bottomT + T, 3*batD], center=true);
-			for (k=[-1,0,1]){
-				translate([0, batD/2, k*batD]) rotate([0,90,0]) cylinder(h=batL, r=batD/2, center=true);
-			}
-		}
-	}	
+
 	module bottom(){
 		module wadds(){
-		bodyshell(key="bottom", wallT=wallT);
-			
-		//shiftedservocontroller(key="poles");
-		shiftedmpu6050();
-		battrack();
+			bodyshell(key="bottom", wallT=wallT);
+			intersection(){
+				servo("bottom");
+				bodyshell(key="bulk", wallT=wallT);
+			}	
+			intersection(){
+				motormounts("bottom");
+				bodyshell(key="bulk", wallT=wallT);
+			}
+			shiftedbattrack("bottom");
 		}
 
 		module wcuts(){
 			difference(){
 			wadds();
-			servo("cutmild");
+			servo("cut");
 			//shiftedservocontroller(key="bolts");
 			motormounts("cut");
 			arm("cut");
 			closebolts(key="bolts");
 			cablecutter2();
+			shiftedbattrack("cut");
 			}
 			
 		}
 		wcuts();
 	}
 
+	//motormounts("cut");
 	module top(){
 		module wadds(){
 			bodyshell(key="top", wallT=wallT);
 			shiftedmicarray(key="poles");
-			intersection(){
-				servo("top");
-				bodyshell(key="bulk", wallT=wallT);
-			}	
-
 			closebolts(key="mnts");
 			shiftedservocontroller(key="poles");
-			//battrack();
 		}
 
 		module wcuts(){
 			difference(){
 			wadds();
-			servo("cutmild");
+			//servo("cut");
 			shiftedmicarray(key="bolts");
 			shiftedmicarray(key="micsleds");
 			motormounts("cut");
@@ -306,7 +356,6 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 			}
 			
 		}
-		//servo("cutmild");
 		wcuts();
 	}
 	
@@ -331,6 +380,6 @@ module body(L, W, T, wallT=3, key="none", R = 5){
 	}
 }
 
-key = "top"; // "bottom", "servobottom", "axle", "bearingaxles", "servogear", "top" 
+key = "xbottom"; //, "servobottom", "axle", "bearingaxles", "servogear", "top" 
 body(bodyH, bodyW, bodyT, key=key);
 
