@@ -1,13 +1,18 @@
 // Collected dimensions:
 
-bodyH = 200;
-bodyW = 92;
+bodyH = 185;
+bodyW = 91;
 bodyT = 36;
+bodywallT = 3;
 
-neckL = 5;
-headW = 135;
+neckL = 25;
+headW = 145;
+headL = 47.5;
+headT = 35;
+
+/*headW = 135;
 headL = 46.5;
-headT = 33;
-neckX = 9.5;
+headT = 33;*/
+neckX = 11.0;
 
 mg215dims = [23, 26.5, 12, 6];	

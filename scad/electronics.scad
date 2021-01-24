@@ -15,8 +15,10 @@ module generalel(dims, mountpos, boltD=BOLT3TIGHT, H=2, key="mockup", boltH=0){
 
 	module bolts(){
 		boltH = boltH == 0 ? H : boltH;
+		
+		color("Gray")	
 		for (p=mountpos){
-		translate(p) translate([0,0,H]) mirror([0,0, 1]) bolt(boltH, boltD, -boltD/2);
+			translate(p) translate([0,0,H]) mirror([0,0, 1]) bolt(boltH, boltD, -boltD/2);
 		}
 	}
 	
@@ -24,6 +26,7 @@ module generalel(dims, mountpos, boltD=BOLT3TIGHT, H=2, key="mockup", boltH=0){
 	if (key=="mockup"){
 		echo("mckup");
 		poles();
+		color("Navy")
 		translate([0,0,H]) cube(dims);
 	}
 	else if (key=="bolts"){bolts();}
@@ -34,11 +37,11 @@ module generalel(dims, mountpos, boltD=BOLT3TIGHT, H=2, key="mockup", boltH=0){
 module micarray(H=5, key="mockup", boltH=0){
 	
 	dims = [65, 65, 2];
-	mountpos = [[3, 8], [62, 8], [3, 57], [62, 57]];
+	mountpos = [[3.5, 8], [61.5, 8], [3.5, 57], [61.5, 57]];
 	boltD = BOLT3TIGHT;
 	boltH= boltH==0 ? H + 1: boltH; //  + 1.5;
 	H = H;
-	color("DarkSlateGray")	
+
 	generalel(dims, mountpos, boltD=boltD, H=H, key=key, boltH=boltH);
 	
 	module ledring(){
@@ -53,9 +56,10 @@ module micarray(H=5, key="mockup", boltH=0){
 	module micring(){
 		mich = H + 15;
 		
-		for (phi=[0:90:270]){
+		for (phi=[90:90:360]){
 			rotate([0,0,phi])
-			translate([-dims[0]/2+0.7, dims[1]/2 - 4.0 - 2.0, -mich + H]) cube([4, 6, mich]);
+			translate([dims[0]/2 - 2 - 1., dims[1]/2 - 3, -mich/2 + H]) 
+			cube([4+1, 3+1, mich], center=true);
 		}
 	}
 	
@@ -70,11 +74,23 @@ module servoctrl(H=5, key="mockup", boltH=0, boltD=BOLT25TIGHT){
 	dims = [63, 25.5, 2];
 	mountpos = [[3, 3], [60, 3], [3, 22], [60, 22]];
 	boltH= boltH==0 ? H + 1: boltH; //  + 1.5;
-	H = H;
 	color("DarkSlateGray")	
 	generalel(dims, mountpos, boltD=boltD, H=H, key=key, boltH=boltH);
 
 }
+
+module protoboard(H=5, key="mockup", boltH=0, boltD=BOLT25TIGHT){
+
+	dims = [80, 20.5, 2];
+	mountpos = [[2.5, 2.5], [77.5, 2.5], [2.5, 18], [77.5, 18]];
+	
+	boltH = boltH==0 ? H + 1: boltH; //  + 1.5;
+	
+	color("DarkSlateGray")	
+	generalel(dims, mountpos, boltD=boltD, H=H, key=key, boltH=boltH);
+}
+
+
 
 module camera(cut, H=30){
 	holeD = 30;
@@ -129,7 +145,7 @@ module rpizero(key, H=5, T=2){
 }
 			}
 			else if (key=="bolts"){
-				mirror([0,0,1]) bolt(H - .2, BOLT3TIGHT, 0);
+				mirror([0,0,1]) bolt(H - .2, BOLT3TIGHT, -BOLT3TIGHT/2);
 			}
 		}
 	}
@@ -143,7 +159,7 @@ module rpizero(key, H=5, T=2){
 	}
 	
 	module pwrswitch(){
-		translate([dims[0]/2 - 15.5, -dims[1]/2 - 2, -H-5]) cube([5, 2, 10]);
+		translate([dims[0]/2 - 20.5, -dims[1]/2 - 2, -H-5]) cube([5, 2, 10]);
 	}
 	
 	translate([0,0,H])

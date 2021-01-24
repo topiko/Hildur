@@ -12,9 +12,6 @@ include <dims.scad>;
 //servo_mount_w_axle(false, servoNTooth=20, axleNTooth=20, turnAngleMiddle=120, turnArmW=8,  key="cut");
 //axle_w_gear(GEARMODUL, 20, 180, key="buildall");
 
-angle = 130;
-servoNTooth = 15;
-axleNTooth = round(180/angle*servoNTooth);
 
 module head(L, W, T, create="face"){
 	
@@ -28,7 +25,6 @@ module head(L, W, T, create="face"){
 	//
 	
 	wallT_ = 2;
-	sp = .1;
 	module bulk(R_, T=T){
 		rotate([-90,0,0])
 		linear_extrude(height=T) offset(R_) square([L-2*R, W-2*R], center=true);
@@ -53,13 +49,16 @@ module head(L, W, T, create="face"){
 	}	
 	module shiftedrpizero(key){
 		sX = L/2 - 65/2 - wallT_ - 4;  
-		translate([sX,0, 30/2 - W/2 + 2*wallT_  +2])
-		rotate([90,0,0]) rpizero(key=key, H=6, T=10);
+		H = 6;
+		translate([sX, wallT_, 30/2 - W/2 + 2*wallT_  +2])
+		rotate([90,0,0]) rpizero(key=key, H=H+wallT_, T=10);
 	}	
+
+
 	module shiftedcamera(key, H){
 		cameraR = 32/2;
 		cameraW = 38;
-		sX = (-L + cameraW)/2 + wallT_ + 12;
+		sX = (-L + cameraW)/2 + wallT_ + 12.5;
 
 		translate([sX,-H,0]) rotate([-90,0,0]) {
 			camera(key, H=H);
@@ -71,32 +70,25 @@ module head(L, W, T, create="face"){
 		}
 	}
 	
-	module ledrow(N){
-		dx = 7;
-		y = T - 2*dx + 1;
-		translate([3*N*dx, y, 0])
-		for (i=[-N:1:N]){
-			translate([i*dx, 0, 0])cylinder(h=W*2, r=3/2);
-		}
-	}	
 
 	module shiftedservo(key){
-		hornarmL = 20;
 		turnphi = 110;
 		lowphi = 50;
-			
+		mountT = AXLEBEARINGDIMS[1] + 1;
+		
 		phimiddle = 270-lowphi + turnphi/2;	
+		hornarmL = mountT/sin(turnphi-lowphi) + 5;
+		echo(hornarmL);
 		module shifted_(){
-			translate([neckX, 0, -W/2+wallT]) 
+			translate([neckX, 0, -W/2+wallT_]) 
 			mirror([1,0,0])
 			rotate([0,90,0]) 
 			servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, 
 					    turnAngle=turnphi, armAngleMiddle=phimiddle, 
-					    axlehornDin=AXLEHORNDIN, type=2, 
+					    axlehornDin=AXLEHORNDIN, type=2, T=mountT,
 					    hornarmL=hornarmL);
 		}
 
-		servoNTooth = 16;
 
 		if (key=="top"){
 			intersection(){
@@ -113,6 +105,7 @@ module head(L, W, T, create="face"){
 		else{shifted_();}
 	}
 
+	//shiftedservo("top");
 	module cup(){
 		
 		difference(){
@@ -134,7 +127,7 @@ module head(L, W, T, create="face"){
 		bolts(BOLT3LOOSE);
 		
 		// Wire hole
-		translate([-5, -T/3, +9 +wallT_ - W/2]) rotate([90,0,0]) linear_extrude(W, center=true) offset(2) square([2,14], center=true);
+		translate([-6, -T/3, +9 +wallT_ - W/2]) rotate([90,0,0]) linear_extrude(W, center=true) offset(2) square([2,14], center=true);
 		
 		// Leds:
 		// ledrow(2);
@@ -153,7 +146,7 @@ module head(L, W, T, create="face"){
 			mirror([0,1,0])
 			difference(){
 				shell(wallT=2*wallT_, T=faceT);
-				translate([0,faceT, 0]) mirror([0,1,0]) shell(wallT=wallT_ + .05, T= faceT-wallT_ );
+				translate([0,faceT, 0]) mirror([0,1,0]) shell(wallT=wallT_ + TIGHTSP, T= faceT-wallT_ );
 			}
 		}	
 		module wcuts_(){
@@ -185,6 +178,7 @@ module head(L, W, T, create="face"){
 	else if (create=="rpi"){translate([0,T,0]) shiftedrpizero("boardpoles");}
 	else if (create=="servobottom"){shiftedservo("bottom");}
 	else if (create=="servotop"){shiftedservo("top");}
+	else if (create=="servomockup"){shiftedservo("mockup");}
 	else if (create=="servogear"){shiftedservo("servogear");}
 	else if (create=="axle"){shiftedservo("axle");}
 	else if (create=="bearingaxles"){shiftedservo("bearingaxles");}
@@ -234,24 +228,24 @@ module tiltaxle(L, R, R2=6, key="axle"){
 	
 }
 
-wallT = 1.5;
+//wallT = 1.5;
 
-//tiltaxle(20, 9/2);
-//tiltaxle(20, 9/2, key="adapter");
-
-/*headW = 135;
-headL = 46.5; // + 2*wallT;
-headT = 33;*/
+head(headW, headL, headT, create="cup");
+//translate([0,80,0]) 
 //head(headW, headL, headT, create="face");
-//head(headW, headL, headT, create="cup");
-
 
 //head(headW, headL, headT, create="axleparts");
-//head(headW, headL, headT, create="servotop");/*
-head(headW, headL, headT, create="servobottom");
+//translate([0,40,0]) head(headW, headL, headT, create="servotop");
+
+module tests(){
+	//translate([0,10,0]) head(headW, headL, headT, create="servotop");
+	//head(headW, headL, headT, create="servobottom");
+	translate([0,0,70]) head(headW, headL, headT, create="axleparts");
+}
+
+//tests();
 
 //head(headW, headL, headT, create="rpi");
-//head(headW, headL, headT, create="servotop");
 
 // Inside face pieces:
 

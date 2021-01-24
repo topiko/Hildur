@@ -187,7 +187,7 @@ module kst_mg215_servo(key="cut", hornT=7, ntooth=15, hornSp=SERVOHORNSP, topBea
 module servo_gear(modul, ntooth, gearT, gearTSp=SERVOHORNSP, key="gear", helix_angle=HELIXANGLE, topBearing=false, bearingdims=SERVOBEARINGDIMS){
 	// Gear for servo:
 	sp = TIGHTSP;
-	boreD = 5 - sp;
+	boreD = 5 - sp/2;
 	servoaxleH = 3.8;
 
 	module gear(gearT){
@@ -199,7 +199,8 @@ module servo_gear(modul, ntooth, gearT, gearTSp=SERVOHORNSP, key="gear", helix_a
 
 		translate([0,0,servoaxleH]) cylinder(h=gearT-servoaxleH, r=boreD/2+sp);
 		if (topBearing){
-			translate([0,0,gearT]) cylinder(h=bearingdims[2] + gearTSp, r=bearingdims[0]/2-sp);
+			translate([0,0,gearT]) cylinder(h=bearingdims[2] + gearTSp, r=bearingdims[0]/2-sp/2);
+			translate([0,0,gearT]) cylinder(h=gearTSp, r=bearingdims[0]/2 + .75);
 		}
 	}	
 	
