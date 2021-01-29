@@ -25,6 +25,7 @@ module head(L, W, T, create="face"){
 	//
 	
 	wallT_ = 2;
+	headcuplowphi = 100;
 	module bulk(R_, T=T){
 		rotate([-90,0,0])
 		linear_extrude(height=T) offset(R_) square([L-2*R, W-2*R], center=true);
@@ -43,7 +44,7 @@ module head(L, W, T, create="face"){
 		for (x=boltpos){ 
 			for (k=[-1, 1]){
 				rot = k==-1 ? 0 : 180;
-				translate([x,T-4, k*W/2]) rotate([rot, 0, 0]) bolt(6, boltD, .5);
+				translate([x,T-4, k*W/2]) rotate([rot, 0, 0]) bolt(6, boltD, .2);
 			}
 		}
 	}	
@@ -73,8 +74,8 @@ module head(L, W, T, create="face"){
 
 	module shiftedservo(key){
 		turnphi = 110;
-		lowphi = 50;
-		mountT = AXLEBEARINGDIMS[1] + 1;
+		lowphi = headcuplowphi; //100;
+		mountT = AXLEBEARINGDIMS[1] + 2;
 		
 		phimiddle = 270-lowphi + turnphi/2;	
 		hornarmL = mountT/sin(turnphi-lowphi) + 5;
@@ -188,44 +189,27 @@ module head(L, W, T, create="face"){
 		shiftedcamera(true, H= -10);
 		}
 	}
+	else if (create=="neck"){neckcurve(headcuplowphi);}
+	
 }
 
+module neckcurve(headcuplowphi){
+	
+	headlowphi = 40; 
+	theta = (headcuplowphi - 90) + headlowphi;
 
-module tiltaxle(L, R, R2=6, key="axle"){
-
-	// R2 is the radius of the servo tilt axle.
+	r = AXLEHORNDIN/2 - TIGHTSP;
+	R = 10;
+	L = 15;
 	
-	axleR = R-1.2;	
-	module axle_(){
-	difference(){
-	translate([0,0,-R2]) cylinder(h=L+R2, r=R);
-	difference(){
-		translate([0,0,-250]) cube(500, center=true);
-		rotate([90,0,0]) cylinder(h=3*R, r=R2, center=true);
+	rotate([0,0,-90])
+	translate([-R-r, 0,0]){
+	rotate([90,0,0])
+	rotate_extrude(angle=theta)
+	translate([R+r,0]) circle(r=r);
+	rotate([0,-theta,0]) translate([R+r,0]) cylinder(h=L, r=r);
+	translate([R+r,0, -L]) cylinder(h=L, r=r);
 	}
-	rotate([90,0,0]) cylinder(h=2*R, r=BOLT3TIGHT/2, center=true);
-	translate([0,0,R2]) internal_(0);
-	// cylinder(h=2*L, r=axleR);
-	}
-	}
-	
-	pipeL = (L-R2);
-	module internal_(sp, hadd=0, H=0){
-		H = H == 0 ? pipeL + hadd : H;
-		cylinder(h=H, r=axleR - sp);
-	}
-	
-	if (key=="axle"){axle_();}
-	else if (key=="adapter"){
-		
-		sp = .03;
-		r = 5;
-		angle=90;
-		rotate_extrude(angle=angle) translate([r + R, 0]) circle(R);
-		translate([r+R,0,0]) rotate([90,0,0])  internal_(sp, hadd=-.6, H=pipeL);
-		translate([0,r+R,0]) rotate([0,-90,0]) internal_(sp, hadd=-.6, H=pipeL);
-	}
-	
 }
 
 //wallT = 1.5;
@@ -233,49 +217,16 @@ module tiltaxle(L, R, R2=6, key="axle"){
 head(headW, headL, headT, create="cup");
 //translate([0,80,0]) 
 //head(headW, headL, headT, create="face");
-
+//head(headW, headL, headT, create="neck");
 //head(headW, headL, headT, create="axleparts");
 //translate([0,40,0]) head(headW, headL, headT, create="servotop");
 
 module tests(){
-	//translate([0,10,0]) head(headW, headL, headT, create="servotop");
-	//head(headW, headL, headT, create="servobottom");
+	translate([0,10,0]) head(headW, headL, headT, create="servotop");
+	head(headW, headL, headT, create="servobottom");
 	translate([0,0,70]) head(headW, headL, headT, create="axleparts");
 }
 
 //tests();
 
-//head(headW, headL, headT, create="rpi");
-
-// Inside face pieces:
-
-//head(headW, headL, headT, create="servobottom");
-//head(headW, headL, headT, create="servogear");
-//head(headW, headL, headT, create="bearingaxles");
-//head(headW, headL, headT, create="axle");
-//tiltaxle(6+14, (9-.07)/2);
-//tiltaxle(6+14, (9-.07)/2, key="adapter");
-
-
-// Beam:
-//dual_joint_arm(150, 44, 25, wallT=wallT);
-
-spacerH = 6.5;
-/*
-difference(){
-cylinder(h=spacerH, r=6/2);
-cylinder(h=spacerH, r=3.1/2);
-}*/
-
-// Axles:
-//axle_w_gear(GEARMODUL, axleNTooth, angle, turnAngleMiddle=angle/2, turnArmW=9, key="buildaxle");
-//axle_w_gear(GEARMODUL, axleNTooth, angle, turnAngleMiddle=180 - angle/2, turnArmW=9, key="buildaxle");
-//axle_w_gear(GEARMODUL, axleNTooth, angle, turnAngleMiddle=angle/2, turnArmW=9, key="bearingaxles");
-
-// servo gear:
-//servo_gear(GEARMODUL, servoNTooth, GEART);
-
-// Servo mount:
-//servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=axleNTooth, turnAngleMiddle=angle/2, turnArmW=9, roundtip=true, Xs = 13, key="show");
-//servo_mount_w_axle(false, servoNTooth=servoNTooth, axleNTooth=axleNTooth, turnAngleMiddle=angle/2, turnArmW=9, roundtip=true, Xs = 13, key="cutmild");
 

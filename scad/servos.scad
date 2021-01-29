@@ -16,6 +16,9 @@ module dymond_servo(key="mockup", boltH=2){
 		cylinder(h=hornH, r=10/2);
 		translate([0,-5,0]) cylinder(h=hornH-1, r=5/2);	
 		}
+		
+		rotate([-90,0,0])
+		translate([0, -10, 0]) cylinder(h=1, r=1);
 	}
 
 	module mountarms(H=2, key="bolts"){

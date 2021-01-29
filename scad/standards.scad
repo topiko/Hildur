@@ -30,7 +30,9 @@ TIGHTSP = .05;
 GEARCOLOR="Ivory"; //WhiteSmoke"; //SlateGray";
 BEARINGCOLOR="Gray";
 $fn = 0; //50000;
-$fa = 1; //1
-$fs = .2; //.02
+acc = "print"; // "show"; // "print";
+
+$fa = acc=="print" ? 1 : 5; //1;
+$fs = acc=="print" ? .2 : 1; //.2; //.02
 
 

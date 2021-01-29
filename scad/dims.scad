@@ -8,7 +8,7 @@ bodywallT = 3;
 neckL = 25;
 headW = 145;
 headL = 47.5;
-headT = 35;
+headT = 38;
 
 /*headW = 135;
 headL = 46.5;
