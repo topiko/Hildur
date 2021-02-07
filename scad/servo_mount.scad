@@ -37,16 +37,14 @@ module wedge(H, R, phi, R2=100, roundedge=false){
 	else {for (i=[-1,1]){rotate([0,0,-i*addAngle]) side(i);}}
 }
 
-module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=180, armAngleMiddle=90, axleNtooth=0, H=0, T=0, W=0, axleL=20, type=3, axlehornDin=7, bearingdims=AXLEBEARINGDIMS, axlecoverT=.64, hornarmL=20, addXR=6){
+module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=180, armAngleMiddle=90, axleNtooth=0, H=0, T=0, W=0, axleL=20, type=3, axlehornDin=7, bearingdims=AXLEBEARINGDIMS, axlecoverT=.64, hornarmL=20, addXR=6, addXL=6, boltkey="csunk"){
 	
 	axleNtooth = axleNtooth == 0 ? ceil(servoNtooth/turnAngle*150) : axleNtooth;
 	pitchD1 = pitchD(servoNtooth, GEARMODUL); 
 	pitchD2 = pitchD(axleNtooth, GEARMODUL); 
 	axleX = (pitchD1 + pitchD2)/2;
 
-	gearSp = .2;	
-
-	addXL = 6;
+	gearSp = .1;	
 
 	addX = addXL + addXR;
 	addY = 1;
@@ -54,7 +52,8 @@ module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=
 	servodims = mg215dims;
 
 	axleD = type==1 ? servodims[2] : 
-		(type==2 || type==3 || type==4 || type==5) ? min(servodims[2], bearingdims[0]) : 
+		(type==2 || type==3 || type==4) ? min(servodims[2], bearingdims[0]) : 
+		type==5 ? bearingdims[0] : 
 		100;
 
 	axlehornDout = axlehornDout(axleD, axlecoverT);
@@ -98,11 +97,22 @@ module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=
 			translate([shiftX, 0, shiftZ])
 			cube([mountWx, mountTy/2, mountHz]);
 		}
-		
+
+		module cablecutter(){
+			R = axleD/4; //axleD/2;
+			translate([axleX + axleD/2 - R, 0, 0])
+			rotate([-90,0,0])
+			union(){
+				cylinder(h=mountTy, r=R);
+				sphere(r=R);
+			}
+		}
+
 		if (key=="bottom"){
 			difference(){
 				mirror([0,1,0]) side();
 				cut();
+				if (type==5){cablecutter();}
 			}
 			
 		}
@@ -110,7 +120,9 @@ module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=
 			difference(){
 				side();
 				cut();
+				if (type==5){cablecutter();}
 			}
+
 		}
 
 	}
@@ -143,17 +155,18 @@ module servo_mount_aligned(key="bottom", servoNtooth=SERVOGEARNTOOTH, turnAngle=
 		R1z = 0;
 
 		//sink = 0;
-		sink = max(mountTy/2 - 13, .4);
+		sink = type!= 5 ? max(mountTy/2 - 8, .4) : mountTy/2 - 12;
+			
 		boltL = mountTy-boltD/2 - sink - .2;
 		
-		for (x=boltpostop){translate([x, mountTy/2, topbolthz]) rotate([90,0,0]) bolt(boltL, boltD, sink);}
+		for (x=boltpostop){translate([x, mountTy/2, topbolthz]) rotate([90,0,0]) bolt(boltL, boltD, sink, key=boltkey);}
 	
-		for (x=boltposbot){translate([x, mountTy/2, botbolthz]) rotate([90,0,0]) bolt(boltL, boltD, sink);}
+		for (x=boltposbot){translate([x, mountTy/2, botbolthz]) rotate([90,0,0]) bolt(boltL, boltD, sink, key=boltkey);}
 		
 		if (type==2 || type==3){
-			for (x=boltpostop2){translate([x, mountTy/2, topbolthz2]) rotate([90,0,0])  bolt(boltL, boltD, sink);}
+			for (x=boltpostop2){translate([x, mountTy/2, topbolthz2]) rotate([90,0,0])  bolt(boltL, boltD, sink, key=boltkey);}
 		}	
-		translate(boltposservo) rotate([90,0,0]) bolt(boltL, boltD, sink);
+		translate(boltposservo) rotate([90,0,0]) bolt(boltL, boltD, sink, key=boltkey);
 	}
 	
 	module axle(key){
@@ -274,14 +287,15 @@ module turn_axle(key, ntooth, turnAngle, turnAngleMiddle, axleD=12, axleL=20, ax
 			}
 		}
 	}
+
 	module axlecyl(key){
 		axleD = key != "cut" ? axleD : 
 			type ==1 ? axleD + 2*SERVOHORNSP : 
 			axleD + 4*SERVOHORNSP;
 
-		axleL = ((type==3 || type==4) && key =="cut") ? axleL+hornarmL: 
-			(type==2 && key=="cut") ? axleL+SERVOHORNSP : 
-			type==5 ? axleL+hornarmL :
+		axleL = type==4 && key =="cut" ? axleL+hornarmL: 
+			type==2 && key=="cut" ? axleL+SERVOHORNSP : 
+			type==3 || type==5 ? axleL+hornarmL :
 			axleL;
 
 		if (key=="cut"){
@@ -292,24 +306,72 @@ module turn_axle(key, ntooth, turnAngle, turnAngleMiddle, axleD=12, axleL=20, ax
 			else if (type==2){cylinder(h=axleL + SERVOHORNT, r=axleD/2);}
 			else if (type==3){
 				difference(){
-					cylinder(h=axleL + SERVOHORNT, r=axleD/2);
-					translate([0,0,axleL/2]) cylinder(h=axleL + SERVOHORNT, r=axlehornDin/2+TIGHTSP);
+					cylinder(h=axleL, r=axleD/2);
+					translate([0,0,axleL/2]) cylinder(h=axleL, r=axlehornDin/2+TIGHTSP);
 				}
 			}
 			else if (type==4){cylinder(h=axleL + SERVOHORNT, r=axleD/2);}
 			else if (type==5){
 				difference(){
-					cylinder(h=axleL + SERVOHORNT, r=axleD/2);
-					cylinder(h=axleL + SERVOHORNT, r=axlehornDin/2);
+					cylinder(h=axleL, r=axleD/2);
+					cylinder(h=axleL, r=axlehornDin/2);
 				}
 			}
 		}
-		gearkey = key == "axle" ? "gear" : key == "cut" ? "cut" : key=="mockup" ? "gear" : "none";
-		gear(gearkey);
+		//gearkey = key == "axle" ? "gear" : 
+		//	  key == "cut" ? "cut" : 
+		//	  key=="mockup" ? "gear" : 
+		//	  "none";
+		//
+		//gear(gearkey);
 	}
 
 	module axle(key){
+		
+		module modaxle(key, gearkey, choose){
+
+			module joiner(H, sp){
+				linear_extrude(height=H, twist=H/3*360, convexity = 10, slices=round(H/.15))
+				translate([hthread, 0, 0]) 
+				circle(rscrew + sp);
+				//circle(axleD/2 - hthread - wJ - sp);
+				//cylinder(h=H, r=axleD/2 - wJ + sp, $fn = 8);
+			}
+			
+			H = SERVOHORNT + TIGHTSP;
+			hthread = .3;
+			//rscrew  = (axleD + axlehornDin)/4 + hthread/2;
+			//2*rscrew - hthread = axlehornDin + (axleD - axlehornDin)/3;
+			//2*rscrew + hthread = axlehornDin + (axleD - axlehornDin)*2/3;
+			rscrew = (axlehornDin + axleD)/4;
+			echo("Thinnest wall in servo arm axles: ", (axleD- axlehornDin)/6);
+	
+			if (choose=="axle"){
+				difference(){
+					axlecyl(key);
+					cylinder(h=H, r=100000);
+				}
+				intersection(){
+					axlecyl(key);
+					joiner(H, 0);
+				}	
+			}
+			else if (choose=="gear"){
+				difference(){
+					gear(gearkey);
+					translate([0,0, H]) cylinder(h=10000, r=20000);
+					joiner(H, 2*TIGHTSP);
+				}
+			}
+
+		}
 		module axle_(key){
+			gearkey = key == "axle" ? "gear" : 
+			  	  key == "cut" ? "cut" : 
+			   	  key=="mockup" ? "gear" : 
+			  	  "none";
+		
+
 	  		color(GEARCOLOR)		
 			if (type==1){
 				if (key=="cut"){
@@ -318,12 +380,17 @@ module turn_axle(key, ntooth, turnAngle, turnAngleMiddle, axleD=12, axleL=20, ax
 					translate([0,0, axleL + SERVOHORNT - braxleL]) bearingaxle(key, braxleL);}
 				
 				else if (key=="axle" || key=="mockup"){
-				difference(){	
-					axlecyl(key);
-					axlehorn("axle");
-					translate([0,0, braxleL]) mirror([0,0,1]) bearingaxle("cut", braxleL);
+					difference(){	
+						axlecyl(key);
+						axlehorn("axle");
+						translate([0,0, braxleL]) mirror([0,0,1]) bearingaxle("cut", braxleL);
+					}
+				if (key=="mockup"){
+					translate([0,0, braxleL]) mirror([0,0,1]) bearingaxle(key, braxleL);
 				}
-				if (key=="mockup"){translate([0,0, braxleL]) mirror([0,0,1]) bearingaxle(key, braxleL);}
+				
+				// Create gear:
+				gear(gearkey);
 				translate([0,0, axleL + SERVOHORNT - braxleL]) bearingaxle(key, braxleL);
 				}
 			}
@@ -336,14 +403,20 @@ module turn_axle(key, ntooth, turnAngle, turnAngleMiddle, axleD=12, axleL=20, ax
 						axlecyl(key);
 						axlehorn("axle");
 					}
+
+				gear(gearkey);
 				}
 			}
 			else if (type==3 || type==4 || type==5){
-				if (key=="cut"){
+				if (key=="cut" || key == "mockup"){
 					axlecyl(key);
+					gear(gearkey);
 				}
-				else if (key=="axle" || key=="mockup"){
-					axlecyl(key);
+				else if (key=="axle"){
+					modaxle(key, gearkey, "axle");
+					translate([40,0,0]) modaxle(key, gearkey, "gear");
+					//axlecyl(key);
+
 				}
 			}
 		}
@@ -501,21 +574,21 @@ function axlehornDout(axleD, coverT) = axleD + coverT*2;
 
 //translate([0,0,1])axle_w_gear(GEARMODUL, 26, 60, cut="gear2");
 //kst_servo(cut=true, hornR=8, hornT=8);
-type=2;
+type=3;
 axleL = 12;
-axlehornDin=6;
-hornarmL=20;
-key="mockup"; //"mockup"; //"cut"; //"axleparts"; //"cut"; //"axleparts"; //"cut"; //axleparts"; //"mockup";//"mockup"; //"cut"; //"mockup"; // "mockup";// "cut";
+axlehornDin=3;
+hornarmL=0;
+key="axleparts"; //"mockup"; //"mockup"; //"cut"; //"axleparts"; //"cut"; //"axleparts"; //"cut"; //axleparts"; //"mockup";//"mockup"; //"cut"; //"mockup"; // "mockup";// "cut";
 //servo_mount_aligned(key="cut", servoNtooth=SERVOGEARNTOOTH, turnAngle=90, armAngleMiddle=250, axleL=axleL, axleNtooth=SERVOGEARNTOOTH+5, type=type);
 //servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, turnAngle=90, armAngleMiddle=250, axleL=axleL, axleNtooth=SERVOGEARNTOOTH+5, axlehornDin=axlehornDin, type=type, hornarmL=hornarmL);
 
 
-//mirror([1,0,0]) servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, turnAngle=110, armAngleMiddle=250, axleL=axleL, axlehornDin=axlehornDin, type=type, hornarmL=hornarmL);
+mirror([1,0,0]) servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, turnAngle=110, armAngleMiddle=250, axleL=axleL, axlehornDin=axlehornDin, type=type, hornarmL=hornarmL);
 
 
 //servo_mount_aligned(key=key, servoNtooth=22, turnAngle=120, armAngleMiddle=250, axleL=10, axlehornDin=WHEELBEARINGDIMS[0]-3, type=type, hornarmL=hornarmL, bearingdims=WHEELBEARINGDIMS);
 
-servo_mount_aligned(key=key, servoNtooth=22, turnAngle=110, axleL=10, bearingdims=WHEELBEARINGDIMS, axlehornDin=WHEELBEARINGDIMS[0]- 3, type=5, hornarmL=hornarmL);
+//servo_mount_aligned(key=key, servoNtooth=22, turnAngle=110, axleL=10, bearingdims=WHEELBEARINGDIMS, axlehornDin=WHEELBEARINGDIMS[0]- 5, type=5, hornarmL=hornarmL);
 
 //translate([10,0,0])servo_mount_aligned(key="cut", servoNtooth=22, turnAngle=120, armAngleMiddle=250, axleL=axleL, axlehornDin=axlehornDin, type=type, hornarmL=hornarmL, bearingdims=WHEELBEARINGDIMS);
 //servo_mount_aligned(key="cut", servoNtooth=SERVOGEARNTOOTH, turnAngle=90, armAngleMiddle=90, axleNtooth=0, H=0, T=0, W=0);

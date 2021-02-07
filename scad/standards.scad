@@ -6,7 +6,7 @@ BEARINGAXLED= 5;
 // BOLTS:
 BOLT3TIGHT=2.9;
 BOLT3LOOSE=3.05;
-BOLT25TIGHT = 2.42;
+BOLT25TIGHT = 2.40;
 BOLT25LOOSE = 2.60;
 
 // GEARS:
@@ -30,7 +30,7 @@ TIGHTSP = .05;
 GEARCOLOR="Ivory"; //WhiteSmoke"; //SlateGray";
 BEARINGCOLOR="Gray";
 $fn = 0; //50000;
-acc = "print"; // "show"; // "print";
+acc = "print"; //"show"; // "print";
 
 $fa = acc=="print" ? 1 : 5; //1;
 $fs = acc=="print" ? .2 : 1; //.2; //.02

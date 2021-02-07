@@ -78,7 +78,7 @@ module head(L, W, T, create="face"){
 		mountT = AXLEBEARINGDIMS[1] + 2;
 		
 		phimiddle = 270-lowphi + turnphi/2;	
-		hornarmL = mountT/sin(turnphi-lowphi) + 5;
+		hornarmL = mountT; ///sin(turnphi-lowphi) + 5;
 		echo(hornarmL);
 		module shifted_(){
 			translate([neckX, 0, -W/2+wallT_]) 
@@ -214,11 +214,11 @@ module neckcurve(headcuplowphi){
 
 //wallT = 1.5;
 
-head(headW, headL, headT, create="cup");
+//head(headW, headL, headT, create="cup");
 //translate([0,80,0]) 
 //head(headW, headL, headT, create="face");
 //head(headW, headL, headT, create="neck");
-//head(headW, headL, headT, create="axleparts");
+head(headW, headL, headT, create="axleparts");
 //translate([0,40,0]) head(headW, headL, headT, create="servotop");
 
 module tests(){

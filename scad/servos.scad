@@ -2,13 +2,12 @@ use <gears/gears.scad>;
 use <utils.scad>;
 include <standards.scad>;
 include <dims.scad>;
-module dymond_servo(key="mockup", boltH=2){
+module dymond_servo(key="mockup", boltH=2, boltD=BOLT25TIGHT){
 
 	dims = [23.5, 22, 10.2];
 	mountpos = [[-2, dims[2]/2], [dims[0] + 2, dims[2]/2]];
 	hornpos = [5, dims[1], dims[2]/2];
 	hornH = 5;
-	boltD = BOLT3TIGHT;
 
 	module horn(){
 		rotate([-90,0,0])
@@ -54,7 +53,7 @@ module kst_servo(cut=false, hornR=7, hornT=7, topBearing=false){
 	H = 26.5;
 	T = 12;
 	
-	sp = cut ? .1 : 0;
+	sp = cut ? .15 : 0;
 
 	module frame(){
 		cube([W+2*sp, H+2*sp, T+2*sp]);

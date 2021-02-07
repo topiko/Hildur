@@ -2,7 +2,7 @@
 
 bodyH = 185;
 bodyW = 91;
-bodyT = 36;
+bodyT = 49;
 bodywallT = 3;
 
 neckL = 25;
