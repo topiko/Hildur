@@ -25,7 +25,9 @@ module head(L, W, T, create="face"){
 	//
 	
 	wallT_ = 2;
-	headcuplowphi = 100;
+	headcuplowphi = 100; 
+	servomountT = AXLEBEARINGDIMS[1] + 2;
+	hornarmL = servomountT/2 - 1; //*sin(turnphi-lowphi) + 5;
 	module bulk(R_, T=T){
 		rotate([-90,0,0])
 		linear_extrude(height=T) offset(R_) square([L-2*R, W-2*R], center=true);
@@ -75,11 +77,10 @@ module head(L, W, T, create="face"){
 	module shiftedservo(key){
 		turnphi = 110;
 		lowphi = headcuplowphi; //100;
-		mountT = AXLEBEARINGDIMS[1] + 2;
+		mountT = servomountT;
 		
 		phimiddle = 270-lowphi + turnphi/2;	
-		hornarmL = mountT; ///sin(turnphi-lowphi) + 5;
-		echo(hornarmL);
+		echo("Head horn arm L: ", hornarmL);
 		module shifted_(){
 			translate([neckX, 0, -W/2+wallT_]) 
 			mirror([1,0,0])
@@ -87,7 +88,7 @@ module head(L, W, T, create="face"){
 			servo_mount_aligned(key=key, servoNtooth=SERVOGEARNTOOTH, 
 					    turnAngle=turnphi, armAngleMiddle=phimiddle, 
 					    axlehornDin=AXLEHORNDIN, type=2, T=mountT,
-					    hornarmL=hornarmL);
+					    hornarmL=hornarmL, threadhandness="left");
 		}
 
 
@@ -189,27 +190,78 @@ module head(L, W, T, create="face"){
 		shiftedcamera(true, H= -10);
 		}
 	}
-	else if (create=="neck"){neckcurve(headcuplowphi);}
+	else if (create=="neck"){
+		neckcurve(headcuplowphi, servomountT, hornarmL=hornarmL);
+	}
 	
 }
 
-module neckcurve(headcuplowphi){
+module neckcurve(headcuplowphi, mountT, hornarmL=LHORNTHREAD, axlehornDin=AXLEHORNDIN){
 	
 	headlowphi = 40; 
-	theta = (headcuplowphi - 90) + headlowphi;
+	theta = -(headcuplowphi - 90) + headlowphi;
 
-	r = AXLEHORNDIN/2 - TIGHTSP;
-	R = 10;
-	L = 15;
 	
-	rotate([0,0,-90])
-	translate([-R-r, 0,0]){
-	rotate([90,0,0])
-	rotate_extrude(angle=theta)
-	translate([R+r,0]) circle(r=r);
-	rotate([0,-theta,0]) translate([R+r,0]) cylinder(h=L, r=r);
-	translate([R+r,0, -L]) cylinder(h=L, r=r);
+	//   | .   c
+	// a |     .
+	//   |_________.
+	//        b
+	
+	ahead = 6 + AXLEBEARINGDIMS[1]/2; // These come from servo mount...
+	bhead = headT - mountT/2; //AXLEBEARINGDIMS[1]/2 + 1;  // The latter is the servo mountT from head.
+	thetahead = atan(ahead/bhead);
+	chead = sqrt(pow(ahead, 2) + pow(bhead,2));
+	
+	needed_chin_space = chead*sin(headlowphi + thetahead) - ahead;
+	echo("Required chin space: ", needed_chin_space);
+
+	Rneck = AXLEBEARINGDIMS[0]/2 + AXLECOVERT;
+	R = 2;
+	showaligner=SHOWALIGNERS; //true;
+	
+	module cylwthread(key, L, phi=0){
+		
+		D = AXLEHORNDIN + 2*RADSP;
+		if (key=="cyl"){
+			difference(){
+				cylinder(h=L, r=Rneck);
+				thread(LHORNTHREAD + 1, D, aligner=showaligner, phi=-phi, dtip2=D, dtip1=D);
+				thread(LHORNTHREAD + 1, D, aligner="onlyaligner", phi=0, dtip2=D, dtip1=D);
+			}
+		}
+		else if (key=="thread"){
+			thread(LHORNTHREAD + 1, D, aligner=showaligner, phi=-phi);
+		}
+
 	}
+	
+	module curve(){
+	
+		translate([-R-Rneck, 0])
+		rotate([90,0,0])
+		rotate_extrude(angle=theta)
+		translate([R+Rneck,0]) circle(r=Rneck);
+	}
+
+	module cylinders(key="cyl"){
+		translate([0,0,-L1]) cylwthread(key, L1, phi=phi1);
+		translate([-R-Rneck,0,0]) rotate([0,-theta,0]) translate([R+Rneck,0,L2]) rotate([0,180,0]) cylwthread(key, L2, phi=phi2);
+	}
+
+
+	L1 = 12;
+	L2 = ahead - hornarmL + 1;
+	phi1 = 35;
+	phi2 = 35;
+	translate([0,0,L1-3]){
+		difference(){
+			curve();
+			cylinders("thread");
+		}
+		cylinders("cyl");
+	}
+	
+	
 }
 
 //wallT = 1.5;
@@ -217,8 +269,9 @@ module neckcurve(headcuplowphi){
 //head(headW, headL, headT, create="cup");
 //translate([0,80,0]) 
 //head(headW, headL, headT, create="face");
-//head(headW, headL, headT, create="neck");
-head(headW, headL, headT, create="axleparts");
+head(headW, headL, headT, create="neck");
+//head(headW, headL, headT, create="servomockup");
+//head(headW, headL, headT, create="axleparts");
 //translate([0,40,0]) head(headW, headL, headT, create="servotop");
 
 module tests(){
@@ -226,6 +279,7 @@ module tests(){
 	head(headW, headL, headT, create="servobottom");
 	translate([0,0,70]) head(headW, headL, headT, create="axleparts");
 }
+
 
 //tests();
 

@@ -38,7 +38,7 @@ module micarray(H=5, key="mockup", boltH=0){
 	
 	dims = [65, 65, 2];
 	mountpos = [[3.5, 8], [61.5, 8], [3.5, 57], [61.5, 57]];
-	boltD = BOLT3TIGHT;
+	boltD = BOLT25TIGHT;
 	boltH= boltH==0 ? H + 1: boltH; //  + 1.5;
 	H = H;
 
@@ -72,8 +72,8 @@ module micarray(H=5, key="mockup", boltH=0){
 
 module servoctrl(H=5, key="mockup", boltH=0, boltD=BOLT25TIGHT){
 	dims = [63, 25.5, 2];
-	mountpos = [[3, 3], [60, 3], [3, 22], [60, 22]];
-	boltH= boltH==0 ? H + 1: boltH; //  + 1.5;
+	mountpos = [[3.5, 3], [59.5, 3], [3.5, 22], [59.5, 22]];
+	//boltH= boltH==0 ? H : boltH; //  + 1.5;
 	color("DarkSlateGray")	
 	generalel(dims, mountpos, boltD=boltD, H=H, key=key, boltH=boltH);
 
@@ -84,7 +84,7 @@ module protoboard(H=5, key="mockup", boltH=0, boltD=BOLT25TIGHT){
 	dims = [80, 20.5, 2];
 	mountpos = [[2.5, 2.5], [77.5, 2.5], [2.5, 18], [77.5, 18]];
 	
-	boltH = boltH==0 ? H + 1: boltH; //  + 1.5;
+	//boltH = boltH==0 ? H: boltH; //  + 1.5;
 	
 	color("DarkSlateGray")	
 	generalel(dims, mountpos, boltD=boltD, H=H, key=key, boltH=boltH);

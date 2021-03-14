@@ -47,73 +47,6 @@ module dymond_servo(key="mockup", boltH=2, boltD=BOLT25TIGHT){
 	 
 }
 
-
-module kst_servo(cut=false, hornR=7, hornT=7, topBearing=false){
-	W = 23;
-	H = 26.5;
-	T = 12;
-	
-	sp = cut ? .15 : 0;
-
-	module frame(){
-		cube([W+2*sp, H+2*sp, T+2*sp]);
-	}
-	
-	module attach(){
-		attW = 4.5 + sp;
-		attT = 1.2 + sp;
-		W_ = W + 2*attW;
-		translate([0,19.8,0])
-		rotate([90,0,0])
-		translate([W_/2-attW, T/2, 0])
-		difference(){
-		translate([0,sp, -attT/2]) cube([W_, T + 2*sp, attT], center=true);
-		if (!cut){
-		for (i=[-1,1]){ for (j=[-1,1]){ 
-			translate([i*(W/2+2), j*3.5, -.1])cylinder(h=2*attT, r=2.2/2);
-		}
-		}
-		}
-		}
-	}
-	
-	module horn(){
-		translate([6, H+sp, T/2]) rotate([-90,0,0]) 
-		{
-		cylinder(h=hornT, r=hornR);
-		cylinder(h=12, r=4, center=true);
-		if (topBearing){
-			translate([0,0,hornT]) cylinder(h=BEARINGT+4*sp, r=BEARINGD/2+sp/2);}
-		}
-	}
-	
-	module servo(){	
-		frame();	
-		attach();
-		horn();
-		wire();
-	}
-	
-	module wire(){
-		translate([-.5,0,T/2])
-		rotate([-90,0,0]) 
-		{
-		translate([0,0,-1.3]) cylinder(h=8+1.3, r=7/2);
-		translate([0,0,8]) sphere(r=7/2);
-		translate([0, -3.5, -1.3]) cube([35,7, 1.3]);
-		}
-	}
-	
-	color("Silver")	
-	rotate([90,0,0])
-	translate([-6, -H, -T/2])
-	if (cut){ 
-		translate([-sp, -sp, -sp]) servo();}
-	else {servo();}
-		
-}
-
-
 module kst_mg215_servo(key="cut", hornT=7, ntooth=15, hornSp=SERVOHORNSP, topBearing=false){
 
 	dims = mg215dims;
@@ -123,7 +56,7 @@ module kst_mg215_servo(key="cut", hornT=7, ntooth=15, hornSp=SERVOHORNSP, topBea
 	hornX = dims[3];
 
 	hornR = gearD(ntooth, GEARMODUL)/2; //pitchD(ntooth, modul)/2 (ntooth*GEARMODUL)/2 + GEARMODUL; 
-	sp = key=="cut" ? .1 : 0;
+	sp = key=="cut" ? .12: 0;
 
 	module frame(){
 		translate([-sp, -sp, -sp]) 
@@ -141,7 +74,7 @@ module kst_mg215_servo(key="cut", hornT=7, ntooth=15, hornSp=SERVOHORNSP, topBea
 		translate([0,sp, -attT/2]) cube([W_, T + 2*sp, attT], center=true);
 		if (key=="cut"){
 		for (i=[-1,1]){ for (j=[-1,1]){ 
-			translate([i*(W/2+2), j*3.5, -.1])cylinder(h=2*attT, r=2.2/2);
+			translate([i*(W/2+2), j*3.5, 0])cylinder(h=3*attT, r=2.2/2);
 		}
 		}
 		}

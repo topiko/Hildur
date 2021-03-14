@@ -17,22 +17,31 @@ HELIXANGLE=45;
 SERVOGEARNTOOTH = 15;
 SERVOHORNT = 7;
 SERVOHORNBEARINGT = 4;
-AXLEHORNDIN = 6;
 
 // Bore, Diam, Thickness
 SERVOBEARINGDIMS = [5, 11, 4];
 AXLEBEARINGDIMS = [10, 15, 4];
 WHEELBEARINGDIMS = [20, 27, 4];
 
+AXLEHORNDIN = AXLEBEARINGDIMS[0]/sqrt(2);
+
 SERVOHORNSP = .96;
-TIGHTSP = .05;
+TIGHTSP = .075;
+RADSP = .30; //3*TIGHTSP;
+AXLECOVERT = .64;
+
+THREADH=.6;
+THREADPITCH = 2;
+
+SHOWALIGNERS ="dontshow"; // show
+
 
 GEARCOLOR="Ivory"; //WhiteSmoke"; //SlateGray";
 BEARINGCOLOR="Gray";
 $fn = 0; //50000;
 acc = "print"; //"show"; // "print";
 
-$fa = acc=="print" ? 1 : 5; //1;
-$fs = acc=="print" ? .2 : 1; //.2; //.02
+$fa = acc=="print" ? 1 : 15; //1;
+$fs = acc=="print" ? .3 : 2; //.2; //.02
 
 
