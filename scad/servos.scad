@@ -126,16 +126,21 @@ module servo_gear(modul, ntooth, gearT, gearTSp=SERVOHORNSP, key="gear", helix_a
 	servoaxleH = 3.8;
 
 	module gear(gearT){
+		
+		// Gear itself:	
 		herringbone_gear(modul, ntooth, gearT, 
 			 	 boreD, 
-			 	 pressure_angle=20, 
+			 	 pressure_angle=PRESSUREANGLE, 
 			 	 helix_angle=helix_angle, 
 			 	 optimized=false);
-
+		
+		// Fill of bore of servoaxle:	
 		translate([0,0,servoaxleH]) cylinder(h=gearT-servoaxleH, r=boreD/2+sp);
+		
+		// Top bearing axle:
 		if (topBearing){
-			translate([0,0,gearT]) cylinder(h=bearingdims[2] + gearTSp, r=bearingdims[0]/2-sp/2);
-			translate([0,0,gearT]) cylinder(h=gearTSp, r=bearingdims[0]/2 + .75);
+			translate([0,0,gearT]) cylinder(h=bearingdims[2] + gearTSp, d=bearingdims[0]-sp);
+			translate([0,0,gearT]) cylinder(h=gearTSp, d=bearingdims[0] + 1.5);
 		}
 	}	
 	
@@ -168,9 +173,9 @@ module servo_gear(modul, ntooth, gearT, gearTSp=SERVOHORNSP, key="gear", helix_a
 }
 
 
-kst_mg215_servo(key="mockup", topBearing=true);
-translate([5,0,0])kst_mg215_servo(key="cut", topBearing=true);
-//servo_gear(modul, ntooth, gearT, gearTSp=SERVOHORNSP, key="gear", helix_angle=HELIXANGLE, topBearing=false, bearingdims=SERVOBEARINGDIMS);
+//kst_mg215_servo(key="mockup", topBearing=true);
+//translate([5,0,0])kst_mg215_servo(key="cut", topBearing=true);
+translate([5,0,0])kst_mg215_servo(key="servogear", topBearing=true);
 //translate([5,0,0]) servo_gear(GEARMODUL, SERVOGEARNTOOTH, SERVOHORNT, gearTSp=SERVOHORNSP, key="gear", helix_angle=HELIXANGLE, topBearing=true, bearingdims=SERVOBEARINGDIMS);
 //servo_gear(GEARMODUL, SERVOGEARNTOOTH, SERVOHORNT, gearTSp=SERVOHORNSP, key="mockup", helix_angle=HELIXANGLE, topBearing=true, bearingdims=SERVOBEARINGDIMS);
 //translate([-5,0,0])servo_gear(GEARMODUL, SERVOGEARNTOOTH, SERVOHORNT, gearTSp=SERVOHORNSP, key="cutgear", helix_angle=HELIXANGLE, topBearing=true, bearingdims=SERVOBEARINGDIMS);

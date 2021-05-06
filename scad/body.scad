@@ -16,7 +16,7 @@ module battrack(key, wallT=bodywallT){
 	batD=18.2;
 	batL=66;
 	bottomT=.5;
-	T = 7;
+	T = 5;
 	W = bodyW - wallT*2;	
 	H = 3*batD + 2;
 	module batt(){
@@ -33,9 +33,9 @@ module battrack(key, wallT=bodywallT){
 		}
 		else if (key=="bolts"){
 			for (i=[-1,1]){
-				translate([bodyW/2*i, 0, 0])
+				translate([bodyW/2*i, 0, T/2])
 				for (j=[-batD, 0, batD]){
-					translate([0, j, T/2]) rotate([0, -i*90, 0]) bolt(7, boltD, .5);
+					translate([0, j, 0]) rotate([0, -i*90, 0]) bolt(7, boltD, .5);
 				}
 			}
 		}
@@ -83,12 +83,12 @@ module boardmounts(key="mounts", Hmax=0, sp=0){
 	       Hmax;
 
 	wT = .64;
-	addx = .3; // spacing along the pch dir
+	addx = .4; // spacing along the pch dir
 	
 	W1 = 20.5 + addx;
 	H1 = 11;
 	T = 1.5;
-	W = 2*W1 + 3*T;
+	W = 2*W1 + 3*T  - .8;
 	shiftX = W1/2 + T/2;
 	W2 = 21.4 + addx;
 	H2 = 6.5;
@@ -125,90 +125,6 @@ module spacer(dout, din, h){
 	}
 }
 
-module leg(){
-	
-	D1 = 24;
-	D2 = 35;
-	D = 30;
-	H = 20;
-	plateT = 2;
-	wallT = 3;
-	wheelSp = 1;
-	module plate_(H, wt, sw=0){
-		
-		
-		module bulk_(H=H, substR=0){
-			hull(){
-				cylinder(h=H, d=D1-2*(sw+substR));		
-				translate([D, 0, 0]) cylinder(h=H, d=D2-2*(sw+substR));		
-			}
-		}
-		
-
-		difference(){
-			bulk_();
-			if (wt!=0){translate([0,0,-1]) bulk_(2*H, wt);}
-		}
-	}
-	
-	module gear(){
-
-		herringbone_gear(GEARMODUL, ntooth, SERVOHORNT, 
-					   	gearBore, 
-					   	pressure_angle=20, 
-					   	helix_angle=k*HELIXANGLE, 
-					   	optimized=false);
-
-
-	}
-	
-	module wheel(T, R, r0, bore, key="wheel"){
-		
-		T = key == "cut" ? 2*(r0 + wheelSp) : T;
-		addT = key == "cut" ? plateT : 0;
-		wheelZ = plateT + r0 + wheelSp;
-
-		r0 = key == "cut" ? r0 + wheelSp : r0;
-		addZ = key == "cut" ? 0 : wheelSp;
-		
-		translate([D,0,wheelZ])
-		
-		rotate_extrude(angle=360){		
-		if (key=="wheel"){
-		difference(){
-			translate([bore/2, -T/2]) square([R-r0-bore/2, T]);
-			translate([R-r0, 0]) circle(r0);
-		}
-		}
-		else if (key=="cut"){
-			translate([R-r0+wheelSp, 0]) circle(T/2);
-			translate([R-r0+wheelSp, 0]) circle(T/2);
-			translate([0, -2*T]) square([R+wheelSp, 2*T]);
-		}
-		}
-		
-	}
-	module top(H, bottomT, wallT, sw=0){
-		rimT = wallT/2;
-		rimH = plateT/2;
-		translate([0,0,plateT]){ 	
-			translate([0,0, H-bottomT]) plate_(bottomT, 0, sw);
-			plate_(H, wallT, sw);
-			translate([0,0,-rimH])plate_(H, rimT, wallT-rimT);
-		}
-	}
-	
-	wheelT = 3;
-	wheelR = 24;
-	rubberR = 2;
-	wheelBore=10;
-	wheel(wheelT, wheelR, rubberR, wheelBore, "cut");
-	//wheel(wheelT, wheelR, rubberR, wheelBore);
-	//body(bodyH, bodyW, bodyT, key="wheelaxle");
-
-	//plate_(2, 0);
-	top(H, plateT, wallT);
-}
 
 module body(L, W, T, wallT=3, key="none"){
 	
@@ -217,10 +133,9 @@ module body(L, W, T, wallT=3, key="none"){
 	bottomT=2.0;
 	topT = attachH+bottomT; 
 	botT = T-topT;
-	cornerR = 5;
 	subst = 2*(wallT + TIGHTSP*2);
 	wheelbearsp = .05;
-	Tup = AXLEBEARINGDIMS[1] + 1 + attachH + bottomT;
+	Tup = AXLEBEARINGDIMS[1] + 1 + attachH + bottomT + 2;
 	bodyfacetheta = atan((T- Tup)/L);
 
 	module servo(key="cut"){
@@ -361,7 +276,7 @@ module body(L, W, T, wallT=3, key="none"){
 	module shiftedbattrack(key){
 		posX = 0;
 		posY = -botT;
-		posZ = -L/2 + wallT + 59.0 + 18*3/2 + shiftZ; //-17;
+		posZ = -L/2 + wallT + 60.0 + 18*3/2 + shiftZ; //-17;
 		if (key!="top"){
 			translate([posX, posY, posZ]) rotate([-90,0,0]) 
 			battrack(key);
@@ -413,7 +328,7 @@ module body(L, W, T, wallT=3, key="none"){
 			
 		module swichmount(){
 			translate([-swichframeH/2 - wT, 0, 0])
-			rotate([-90,0,0]) rotate([0,0,90]) sideelmount(swichframeW, wT, swichframeT, T, swichframeH);
+			rotate([-90,0,0]) rotate([0,0,90]) sideelmount(swichframeW, wT, swichframeT/3*2, T, swichframeH);
 		}
 		module cut(){
 			armT = 3;
@@ -467,7 +382,7 @@ module body(L, W, T, wallT=3, key="none"){
 	}
 
 	module shiftedbattcable(){
-		connectorT=2.4 + .3;
+		connectorT=2.4 + .2;
 		connectorW=8.1 + 2*TIGHTSP;
 
 		translate([-W/2+wallT+13,-botT+bottomT, L/2-wallT*2]) cube([connectorW, connectorT, 20]);
@@ -493,15 +408,22 @@ module body(L, W, T, wallT=3, key="none"){
 		addXR = 8;
 		hornarmL=2;
 
-		module unit(key, shift=true, threadhandness="right"){
+		module unit(key, shift=true, side="left", threadhandness="none"){
 			module mount(){
-				servo_mount_aligned(key=key, servoNtooth=18, axleNtooth=26, 
-					    turnAngle=120, axleL=axleL, bearingdims=WHEELBEARINGDIMS,
+				servo_mount_aligned(key=key, servoNtooth=20, axleNtooth=26, 
+					    //turnAngle=120, 
+					    axleL=axleL, bearingdims=WHEELBEARINGDIMS,
 					    axlehornDin=axlehornDin, type=5, addXR=addXR, 
 					    threadhandness=threadhandness, T=mountT, hornarmL=hornarmL, boltkey="flat");
 				if (key=="cut"){translate([0,mountT/2,-T]) cylinder(h=T, r=R/2 + wheelbearsp);}
 
 			}
+
+			mirax = side=="left" ? 0 : 1;
+			threadhandness = threadhandness=="right" || threadhandness=="left" ? threadhandness :
+					side =="right" ? "left" : "right";
+
+			mirror([mirax,0,0])
 			if (shift){
 				translate([W/2 + wheelbearingXout, -botT, -L/2 + wallT + R/2 + addXR])
 				rotate([0,90,0]) mount();
@@ -510,8 +432,8 @@ module body(L, W, T, wallT=3, key="none"){
 		}
 
 		module both(key){	
-			mirror([1,0,0])unit(key, threadhandness="left");
-			unit(key);
+			unit(key, side="left");
+			unit(key, side="right");
 		}
 				
 		if (key=="bottom"){
@@ -521,8 +443,6 @@ module body(L, W, T, wallT=3, key="none"){
 			}
 		}
 		else if (key=="top"){
-			//translate([0,0,-mountT/2]) 
-			//both(key);
 			echo(cornerR, subst/2);
 			difference(){
 			intersection(){
@@ -539,13 +459,14 @@ module body(L, W, T, wallT=3, key="none"){
 		else if (key=="axleparts"){
 			both(key);
 		}
-		else if (key=="gear" || key=="axleNOTgear"){
-			echo(key);
+		else if (key=="axleNOTgearRight" || key=="axleNOTgearLeft"){
+			side = key == "axleNOTgearRight" ? "right" : "left";
+			key = "axleNOTgear";
+			unit(key, false, side=side, threadhandness="right");
+			
+		}
+		else if (key=="gear"){
 			unit(key, false);
-			//servo_mount_aligned(key="mockup", servoNtooth=18, axleNtooth=26, 
-			//		    turnAngle=100, axleL=axleL, bearingdims=WHEELBEARINGDIMS, 
-			//		    axlehornDin=axlehornDin, type=5, addXR=addXR, T=mountT, hornarmL=hornarmL, boltkey="flat");
-
 		}
 		else {unit(key);}
 
@@ -597,7 +518,7 @@ module body(L, W, T, wallT=3, key="none"){
 		posY = get_y(posZ, -.5);
 		hw = 30;
 		wt = 1.2; // wallT
-		hframe = 5;
+		hframe = 6;
 		ledD = 5;
 
 		if (key=="cut"){
@@ -608,7 +529,7 @@ module body(L, W, T, wallT=3, key="none"){
 		}
 		else if (key=="ledframe"){
 			difference(){
-				cube([hw-2*TIGHTSP, hw-2*TIGHTSP, hframe] ,center=true);
+				cube([hw-3*TIGHTSP, hw-3*TIGHTSP, hframe] ,center=true);
 				translate([0,0,-wt]) cube([hw - 2*wt, hw-2*wt, hframe], center=true);
 				cylinder(h=4*hframe, r=ledD/2 + TIGHTSP);
 			}	
@@ -728,10 +649,12 @@ module body(L, W, T, wallT=3, key="none"){
 	else if (key=="elmounts"){
 		shiftedelmounts("mounts");
 	}
-	else if (key=="wheelaxle"){
-		motormounts("axleNOTgear");
+	else if (key=="wheelaxleLeft"){
+		motormounts("axleNOTgearLeft");
 	}
-	
+	else if (key=="wheelaxleRight"){
+		motormounts("axleNOTgearRight");
+	}
 	else if (key=="cover"){
 		axle("cover");
 	}
@@ -750,10 +673,11 @@ module body(L, W, T, wallT=3, key="none"){
 key = "wheelaxle"; // "axleparts"; //"bottom"; //"tests"; //"bottom"; //"tests"; //"battracktop"; //"tests"; // "xbottom"; //"tests"; //"bottom"; //"axleparts";// "bottom"; //"tests"; // "top"; // "bottom"; //"mockup"; //"bottom"; //, "servobottom", "axle", "bearingaxles", "servogear", "top" 
 
 //body(bodyH, bodyW, bodyT, key=key);
-leg();
+//leg();
 //body(bodyH, bodyW, bodyT, key="heartframe");
 //body(bodyH, bodyW, bodyT, key="battracktop");
 //body(bodyH, bodyW, bodyT, key="top");
+body(bodyH, bodyW, bodyT, key="bottom");
 //body(bodyH, bodyW, bodyT, key="elmounts");
 //body(bodyH, bodyW, bodyT, key="servotop");
 //body(bodyH, bodyW, bodyT, key="motorservotop");

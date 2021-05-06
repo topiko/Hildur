@@ -15,7 +15,7 @@ include <dims.scad>;
 
 module head(L, W, T, create="face"){
 	
-	R = 5;	
+	R = cornerR;	
 	// L = legth of head in nose dir:
 	// W = width of head at back of the head.
 	// T = height of the head at back of the head
@@ -138,7 +138,7 @@ module head(L, W, T, create="face"){
 	}	
 		
 	module face(){
-		faceT = 12;
+		faceT = 13;
 		camsink=T - 10;
 		
 		
@@ -217,8 +217,9 @@ module neckcurve(headcuplowphi, mountT, hornarmL=LHORNTHREAD, axlehornDin=AXLEHO
 
 	Rneck = AXLEBEARINGDIMS[0]/2 + AXLECOVERT;
 	R = 2;
-	showaligner=SHOWALIGNERS; //true;
-	
+	showaligner=SHOWALIGNERS; //true;"show"; //
+	//RADSP = .2;	
+
 	module cylwthread(key, L, phi=0){
 		
 		D = AXLEHORNDIN + 2*RADSP;
@@ -251,8 +252,8 @@ module neckcurve(headcuplowphi, mountT, hornarmL=LHORNTHREAD, axlehornDin=AXLEHO
 
 	L1 = 12;
 	L2 = ahead - hornarmL + 1;
-	phi1 = 35;
-	phi2 = 35;
+	phi1 = 90; // bottom 35
+	phi2 = 90; // top 35
 	translate([0,0,L1-3]){
 		difference(){
 			curve();
@@ -267,12 +268,12 @@ module neckcurve(headcuplowphi, mountT, hornarmL=LHORNTHREAD, axlehornDin=AXLEHO
 //wallT = 1.5;
 
 //head(headW, headL, headT, create="cup");
-//translate([0,80,0]) 
 //head(headW, headL, headT, create="face");
-head(headW, headL, headT, create="neck");
 //head(headW, headL, headT, create="servomockup");
-//head(headW, headL, headT, create="axleparts");
+//head(headW, headL, headT, create="axle");
 //translate([0,40,0]) head(headW, headL, headT, create="servotop");
+//translate([0,0,20]) head(headW, headL, headT, create="neck");
+head(headW, headL, headT, create="axleparts");
 
 module tests(){
 	translate([0,10,0]) head(headW, headL, headT, create="servotop");

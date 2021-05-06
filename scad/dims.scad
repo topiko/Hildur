@@ -1,8 +1,9 @@
 // Collected dimensions:
 
-bodyH = 215;
+bodyH = 220;
 bodyW = 91;
-bodyT = 50; // 30 + 2
+cornerR=4;
+bodyT = 52; // 30 + 2
 bodywallT = 3;
 
 neckL = 15;

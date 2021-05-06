@@ -92,7 +92,7 @@ module pololu_motor(key="motor", Lmount=0, firewallT=0){
 		// axle
 		difference(){
 			cylinder(h=Laxle, d=Daxle+2*sp);
-			translate([2*Laxle + Daxle/2 - daxlecut-sp, 0 ,0])cube(4*Laxle, center=true);
+			translate([2*Laxle + Daxle/2 - daxlecut + sp, 0 ,0])cube(4*Laxle, center=true);
 		}
 		// motor
 		translate([0,0,-L]) motor(sp);
@@ -135,7 +135,7 @@ module wheel(key, legside="right"){
 
 	BEARINGDIMSWHEEL = SERVOBEARINGDIMS;
 	bearingoutRsp = TIGHTSP/5*3;
-	bearinginRsp = TIGHTSP/2;
+	bearinginRsp = TIGHTSP/5*3; // (5/3);
 	boltsink = .3;
 	bearingAxleD = SERVOBEARINGDIMS[0]-2*bearinginRsp;
 
@@ -145,7 +145,7 @@ module wheel(key, legside="right"){
 		difference(){
 			translate([0, 0, gearDwheelcenter]) gear(ntoothwheel, gearT);
 			wheel_(RADSP);
-			cylinder(h=10000, d=bearingdims[1]+2*bearingoutRsp, center=true);
+			cylinder(h=10000, d=bearingdims[1]+4*bearingoutRsp, center=true);
 		}
 	}
 	module gear_motor_(key="gear"){
@@ -244,7 +244,7 @@ module wheel(key, legside="right"){
 			translate([0,0,-diskT/2 + bearingdims[2]]) 
 			difference(){
 			cylinder(h=L-2*bearingdims[2], d=bearingdims[0] + 2.);
-			cylinder(h=3*(L-2*bearingdims[2]), d=bearingdims[0] + .2, center=true);
+			cylinder(h=3*(L-2*bearingdims[2]), d=bearingAxleD + .2, center=true);
 			}
 		}
 		else if (key=="spacerout"){
@@ -346,10 +346,13 @@ module wheel(key, legside="right"){
 		}
 	}
 	module side_in_(){
+		bodykey = legside == "right" ? "wheelaxleRight" : "wheelaxleLeft";
+		phimiddle_ = 25;
+		phimiddle = legside=="right" ? phimiddle_+180 : phimiddle_;
 		difference(){
 			union(){
 				translate([0,0,DsidewalltoLeg]) plate(plateDmotor, plateDwheel, Daxles, H=plateT);
-				translate([0,0,1]) rotate([0,0,phimiddle]) body(bodyH, bodyW, bodyT, key="wheelaxle");
+				translate([0,0,1]) rotate([0,0,phimiddle]) body(bodyH, bodyW, bodyT, key=bodykey);
 			}
 			// mountp oles:
 			translate([0,0,DsidewalltoLeg]){
@@ -363,7 +366,7 @@ module wheel(key, legside="right"){
 		}
 		
 		//motor_("cutmount");
-		phimiddle = 25;
+
 	}
 
 	module plate_(D1, D2, D){
@@ -470,10 +473,10 @@ module wheel(key, legside="right"){
 
 }
 
-legside="left";
+legside="right";
 //wheel(key="mockup", legside=legside);
-//wheel(key="sidein", legside=legside);
-//wheel(key="motormount", legside=legside);
+wheel(key="sidein", legside=legside);
+translate([0,40,0]) wheel(key="motormount", legside=legside);
 //wheel(key="gears", legside=legside);
 //wheel(key="axles", legside=legside);
 //wheel(key="tyre", legside=legside);
@@ -481,4 +484,4 @@ legside="left";
 
 //wheel(key="wheel", legside=legside);
 //wheel(key="bodygears", legside=legside);
-wheel(key="sideout", legside=legside);
+//wheel(key="sideout", legside=legside);
